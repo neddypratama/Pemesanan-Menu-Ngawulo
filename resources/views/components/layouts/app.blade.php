@@ -16,6 +16,13 @@
     {{-- TinyMCE --}}
     <script src="https://cdn.tiny.cloud/1/zj7w29mcgsahkxloyg71v6365yxaoa4ey1ur6l45pnb63v42/tinymce/6/tinymce.min.js"
         referrerpolicy="origin"></script>
+
+    {{--  Currency  --}}
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/robsontenorio/mary@0.44.2/libs/currency/currency.js">
+    </script>
+
+    {{-- Chart.js  --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body class="min-h-screen font-sans antialiased bg-base-200/50 dark:bg-base-200">
@@ -33,7 +40,7 @@
     </x-nav>
 
     {{-- MAIN --}}
-    <x-main full-width>
+    <x-main>
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
 
@@ -50,20 +57,36 @@
                     <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
                         class="-mx-2 !-my-2 rounded">
                         <x-slot:actions>
-                            <x-button icon="o-power" class="btn-circle btn-ghost btn-xs" tooltip-left="logoff"
-                                no-wire-navigate link="/logout" />
+                            <x-dropdown>
+                                <x-slot:trigger>
+                                    <x-button icon="fas.gear" class="btn-circle btn-ghost" />
+                                </x-slot:trigger>
+
+                                <div class="grid grid-rows-2 grid-flow-col gap-4">
+                                    <x-button label="Logout" icon="o-power" link="/logout" responsive />
+                                    <x-theme-toggle class="btn" label="Theme" responsive />
+                                </div>
+                            </x-dropdown>
                         </x-slot:actions>
                     </x-list-item>
 
                     <x-menu-separator />
                 @endif
 
-                <x-menu-item title="Home" icon="o-sparkles" link="/" />
-                <x-menu-item title="Users" icon="o-users" link="/users" />
-                <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
-                <x-menu-sub title="Settings" icon="o-cog-6-tooth">
-                    <x-menu-item title="Wifi" icon="o-wifi" link="####" />
-                    <x-menu-item title="Archives" icon="o-archive-box" link="####" />
+                <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/" />
+                <x-menu-sub title="User Management" icon="fas.users-gear">
+                    <x-menu-item title="Users" icon="o-users" link="/users" />
+                    <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
+                </x-menu-sub>
+                <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
+                    <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
+                    <x-menu-item title="Transactions" icon="fas.sack-dollar" link="/orders" />
+                    <x-menu-item title="Customers" icon="fas.user" link="/customers" />
+                </x-menu-sub>
+                <x-menu-sub title="Warehouse" icon="fas.warehouse">
+                    <x-menu-item title="Categories" icon="fas.list" link="/categories" />
+                    <x-menu-item title="Menus" icon="fas.bowl-food" link="/menus" />
+                    <x-menu-item title="Recipes" icon="fas.receipt" link="/recipes" />
                 </x-menu-sub>
             </x-menu>
         </x-slot:sidebar>

@@ -52,7 +52,6 @@ new class extends Component {
         return [
             ['key' => 'avatar', 'label' => '', 'class' => 'w-1'], 
             ['key' => 'id', 'label' => '#', 'class' => 'w-1'], 
-            ['key' => 'role_name', 'label' => 'Role'], 
             ['key' => 'name', 'label' => 'Name', 'class' => 'w-64'], 
             ['key' => 'no_hp', 'label' => 'No Telepon', 'sortable' => false],
             ['key' => 'email', 'label' => 'E-mail', 'sortable' => false]];
@@ -62,8 +61,8 @@ new class extends Component {
     {
         return User::query()
         ->withAggregate('role', 'name')
+        ->where('role_id', 4)
         ->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))
-        ->when($this->role_id, fn(Builder $q) => $q->where('role_id', $this->role_id))
         ->orderBy(...array_values($this->sortBy))
         ->paginate($this->perPage);
     }
@@ -76,14 +75,10 @@ new class extends Component {
             } else {
                 $this->filter = 0;
             }
-            if (!$this->role_id == 0) {
-                $this->filter += 1;
-            }
         }
         return [
             'users' => $this->users(),
             'headers' => $this->headers(),
-            'roles' => Role::all(),
             'perPage' => $this->perPage,
             'pages' => $this->page,
         ];
@@ -102,10 +97,10 @@ new class extends Component {
 
 <div>
     <!-- HEADER -->
-    <x-header title="Users" separator progress-indicator>
-        <x-slot:actions>
+    <x-header title="Customers" separator progress-indicator>
+        {{-- <x-slot:actions>
             <x-button label="Create" link="/users/create" responsive icon="o-plus" class="btn-primary" />
-        </x-slot:actions>
+        </x-slot:actions> --}}
     </x-header>
 
     <!-- FILTERS -->
@@ -127,14 +122,9 @@ new class extends Component {
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
         <x-table :headers="$headers" :rows="$users" :sort-by="$sortBy" with-pagination
-            link="users/{id}/edit?name={name}&role={role.name}">
+            link="customers/{id}/detail?name={name}">
             @scope('cell_avatar', $user)
                 <x-avatar image="{{ $user->avatar ?? '/empty-user.jpg' }}" class="!w-10" />
-            @endscope
-            @scope('actions', $user)
-                <x-button icon="o-trash" wire:click="delete({{ $user['id'] }})"
-                    wire:confirm="Yakin ingin menghapus {{ $user['name'] }}?" spinner
-                    class="btn-ghost btn-sm text-red-500" />
             @endscope
         </x-table>
     </x-card>
@@ -143,8 +133,6 @@ new class extends Component {
     <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Name..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
-            <x-select placeholder="Roles" wire:model.live="role_id" :options="$roles" icon="o-flag"
-                placeholder-value="0" />
         </div>
 
         <x-slot:actions>

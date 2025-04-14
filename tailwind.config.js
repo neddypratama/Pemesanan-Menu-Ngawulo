@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+    daisyui: {
+        themes: ["light", "dark", "aqua", "cupcake"],
+    },
     content: [
         // You will probably also need these lines
         "./resources/**/**/*.blade.php",
@@ -14,6 +17,7 @@ export default {
     theme: {
         extend: {},
     },
+    
 
     // Add daisyUI
     plugins: [require("daisyui")]

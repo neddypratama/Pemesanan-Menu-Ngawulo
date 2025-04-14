@@ -6,18 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Role extends Model
+class Kategori extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'image',
         'name',
         'created_at',
         'updated_at',
     ];
     
-    public function users(): HasMany
+    public function menus(): HasMany
     {
-        return $this->hasMany(User::class, 'role_id');
+        return $this->hasMany(Menu::class, 'kategori_id');
     }
 }

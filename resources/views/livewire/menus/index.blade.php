@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
-use App\Models\role;
+use App\Models\Menu;
+use App\Models\Kategori;
 use Livewire\Volt\Component;
 use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,13 +19,15 @@ new class extends Component {
     public array $sortBy = ['column' => 'id', 'direction' => 'asc'];
 
     // Create a public property.
-    public int $role_id = 0;
+    public int $kategori_id = 0;
 
     public int $filter = 0;
 
     public $page = [['id' => 10, 'name' => '10'], ['id' => 25, 'name' => '25'], ['id' => 50, 'name' => '50'], ['id' => 100, 'name' => '100']];
 
     public int $perPage = 10; // Default jumlah data per halaman
+
+    public int $stokFilter = 0;
 
     // Clear filters
     public function clear(): void
@@ -38,54 +40,54 @@ new class extends Component {
     // Delete action
     public function delete($id): void
     {
-        $user = User::findOrFail($id);
-        if ($user->avatar && file_exists(public_path($user->avatar))) {
-            unlink(public_path($user->avatar));
+        $menu = Menu::findOrFail($id);
+        if ($menu->photo && file_exists(public_path($menu->photo))) {
+            unlink(public_path($menu->photo));
         }
-        $user->delete();
-        $this->warning("User $user->name akan dihapus", position: 'toast-top');
+        $menu->delete();
+        $this->warning("Menu $menu->name akan dihapus", position: 'toast-top');
     }
 
     // Table headers
     public function headers(): array
     {
-        return [
-            ['key' => 'avatar', 'label' => '', 'class' => 'w-1'], 
-            ['key' => 'id', 'label' => '#', 'class' => 'w-1'], 
-            ['key' => 'role_name', 'label' => 'Role'], 
-            ['key' => 'name', 'label' => 'Name', 'class' => 'w-64'], 
-            ['key' => 'no_hp', 'label' => 'No Telepon', 'sortable' => false],
-            ['key' => 'email', 'label' => 'E-mail', 'sortable' => false]];
+        return [['key' => 'avatar', 'label' => '', 'class' => 'w-1'], ['key' => 'id', 'label' => '#', 'class' => 'w-1'], ['key' => 'kategori_name', 'label' => 'Kategori'], ['key' => 'name', 'label' => 'Name', 'class' => 'w-64'], ['key' => 'price', 'label' => 'Harga'], ['key' => 'stok', 'label' => 'Stok']];
     }
 
-    public function users(): LengthAwarePaginator
+    public function menus(): LengthAwarePaginator
     {
-        return User::query()
-        ->withAggregate('role', 'name')
-        ->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))
-        ->when($this->role_id, fn(Builder $q) => $q->where('role_id', $this->role_id))
-        ->orderBy(...array_values($this->sortBy))
-        ->paginate($this->perPage);
+        return Menu::query()
+            ->withAggregate('kategori', 'name')
+            ->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))
+            ->when($this->kategori_id, fn(Builder $q) => $q->where('kategori_id', $this->kategori_id))
+            ->when($this->stokFilter === 1, fn(Builder $q) => $q->where('stok', '<', 10))
+            ->when($this->stokFilter === 2, fn(Builder $q) => $q->where('stok', '>=', 10))
+            ->orderBy(...array_values($this->sortBy))
+            ->paginate($this->perPage);
     }
 
     public function with(): array
     {
-        if ($this->filter >= 0 && $this->filter < 2) {
+        if ($this->filter >= 0 && $this->filter < 3) {
             if (!$this->search == null) {
                 $this->filter = 1;
             } else {
                 $this->filter = 0;
             }
-            if (!$this->role_id == 0) {
+            if (!$this->kategori_id == 0) {
+                $this->filter += 1;
+            }
+            if (!$this->stokFilter == 0) {
                 $this->filter += 1;
             }
         }
         return [
-            'users' => $this->users(),
+            'menus' => $this->menus(),
             'headers' => $this->headers(),
-            'roles' => Role::all(),
+            'kategori' => Kategori::all(),
             'perPage' => $this->perPage,
             'pages' => $this->page,
+            'stokFilters' => [['id' => 0, 'name' => 'Semua'], ['id' => 1, 'name' => 'Stok dibawah minimum'], ['id' => 2, 'name' => 'Stok diatas minimum']],
         ];
     }
 
@@ -102,9 +104,9 @@ new class extends Component {
 
 <div>
     <!-- HEADER -->
-    <x-header title="Users" separator progress-indicator>
+    <x-header title="Menus" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" link="/users/create" responsive icon="o-plus" class="btn-primary" />
+            <x-button label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" />
         </x-slot:actions>
     </x-header>
 
@@ -114,7 +116,7 @@ new class extends Component {
             <x-select label="Show entries" :options="$pages" wire:model.live="perPage" class="w-15" />
         </div>
         <div class="md:col-span-6">
-            <x-input placeholder="Name..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass"
+            <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass"
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
@@ -126,14 +128,14 @@ new class extends Component {
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$users" :sort-by="$sortBy" with-pagination
-            link="users/{id}/edit?name={name}&role={role.name}">
-            @scope('cell_avatar', $user)
-                <x-avatar image="{{ $user->avatar ?? '/empty-user.jpg' }}" class="!w-10" />
+        <x-table :headers="$headers" :rows="$menus" :sort-by="$sortBy" with-pagination
+            link="menus/{id}/edit?name={name}&kategori={kategori.name}">
+            @scope('cell_avatar', $menu)
+                <x-avatar image="{{ $menu->photo ?? '/empty-user.jpg' }}" class="!w-10" />
             @endscope
-            @scope('actions', $user)
-                <x-button icon="o-trash" wire:click="delete({{ $user['id'] }})"
-                    wire:confirm="Yakin ingin menghapus {{ $user['name'] }}?" spinner
+            @scope('actions', $menu)
+                <x-button icon="o-trash" wire:click="delete({{ $menu['id'] }})"
+                    wire:confirm="Yakin ingin menghapus {{ $menu['name'] }}?" spinner
                     class="btn-ghost btn-sm text-red-500" />
             @endscope
         </x-table>
@@ -142,9 +144,11 @@ new class extends Component {
     <!-- FILTER DRAWER -->
     <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
         <div class="grid gap-5">
-            <x-input placeholder="Name..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
-            <x-select placeholder="Roles" wire:model.live="role_id" :options="$roles" icon="o-flag"
+            <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
+            <x-select placeholder="Kategori" wire:model.live="kategori_id" :options="$kategori" icon="o-flag"
                 placeholder-value="0" />
+            <x-select label="" wire:model.live="stokFilter" :options="$stokFilters" icon="o-archive-box" />
+
         </div>
 
         <x-slot:actions>

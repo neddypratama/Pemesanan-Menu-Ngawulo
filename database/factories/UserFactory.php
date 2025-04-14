@@ -3,7 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Country;
+use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -26,13 +28,16 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'country_id' => Country::inRandomOrder()->first(),
+            'role_id' => Role::inRandomOrder()->first(),
             'name' => fake()->name(),
             'bio' => fake()->paragraph(),
             'email' => fake()->unique()->safeEmail(),
+            'no_hp' => fake()->numerify('08##########'),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'created_at' => Carbon::now()->subDays(rand(0, 30)),
+            'updated_at' => Carbon::now()->subDays(rand(0, 30)),
         ];
     }
 

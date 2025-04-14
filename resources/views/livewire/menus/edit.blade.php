@@ -1,8 +1,8 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\User;
-use App\Models\Role;
+use App\Models\Menu;
+use App\Models\Kategori;
 use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
@@ -12,36 +12,36 @@ new class extends Component {
     use Toast, WithFileUploads;
 
     // Component parameter
-    public User $user;
+    public Menu $menu;
 
-    #[Rule('required')]
+    #[Rule('required|max:225')]
     public string $name = '';
 
-    #[Rule('required|email')]
-    public string $email = '';
+    #[Rule('required|integer|min:1')]
+    public int $price;
 
-    #[Rule('required|digits_between:10,13|regex:/^[0-9]+$/')]
-    public string $no_hp = '';
+    #[Rule('required|integer|min:1')]
+    public int $stok;
 
-    #[Rule('sometimes')]
-    public ?int $role_id = null;
+    #[Rule('required|sometimes')]
+    public ?int $kategori_id = null;
 
     #[Rule('nullable|image|max:1024')]
-    public $photo;
+    public $foto;
 
     #[Rule('sometimes')]
-    public ?string $bio = null;
+    public ?string $deskripsi = null;
 
     public function with(): array
     {
         return [
-            'roles' => Role::all(),
+            'kategori' => Kategori::all(),
         ];
     }
 
     public function mount(): void
     {
-        $this->fill($this->user);
+        $this->fill($this->menu);
     }
 
     public function save(): void
@@ -50,50 +50,48 @@ new class extends Component {
         $data = $this->validate();
 
         // Update
-        $this->user->update($data);
+        $this->menu->update($data);
 
         // Upload file and save the avatar `url` on User model
-        if ($this->photo) {
+        if ($this->foto) {
             // Hapus avatar lama jika ada
-            if ($this->user->avatar) {
-                $oldAvatarPath = public_path(str_replace('/storage', 'storage', $this->user->avatar));
+            if ($this->menu->photo) {
+                $oldAvatarPath = public_path(str_replace('/storage', 'storage', $this->menu->photo));
                 if (file_exists($oldAvatarPath)) {
                     unlink($oldAvatarPath);
                 }
             }
 
             // Simpan avatar baru
-            $url = $this->photo->store('users', 'public');
-            $this->user->update(['avatar' => "/storage/$url"]);
+            $url = $this->foto->store('menus', 'public');
+            $this->menu->update(['photo' => "/storage/$url"]);
         }
 
         // You can toast and redirect to any route
-        $this->success('User updated with success.', redirectTo: '/users');
+        $this->success('Menu updated with success.', redirectTo: '/menus');
     }
 };
 
 ?>
 
 <div>
-    <dd>{{$this->photo}}</dd>
-    <x-header title="Update {{ $user->name }}" separator />
+    <x-header title="Update {{ $menu->name }}" separator />
 
     <x-form wire:submit="save">
         {{--  Basic section  --}}
         <div class="lg:grid grid-cols-5">
             <div class="col-span-2">
-                <x-header title="Basic" subtitle="Basic info from user" size="text-2xl" />
+                <x-header title="Basic" subtitle="Basic info from menu" size="text-2xl" />
             </div>
 
             <div class="col-span-3 grid gap-3">
-                <x-file label="Avatar" wire:model="photo" accept="image/png, image/jpeg" crop-after-change>
-                    <img src="{{ $user->avatar ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
+                <x-file label="Photo" wire:model="foto" accept="image/png, image/jpeg" crop-after-change>
+                    <img src="{{ $menu->photo ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
                 </x-file>
+                <x-select label="Kategori" wire:model="kategori_id" :options="$kategori" placeholder="---" />
                 <x-input label="Name" wire:model="name" />
-                <x-input label="Email" wire:model="email" />
-                <x-input label="No Telepon" wire:model="no_hp" type="text"
-                    oninput="this.value = this.value.replace(/\D/g, '')" />
-                <x-select label="Roles" wire:model="role_id" :options="$roles" placeholder="Pilih peran pengguna" />
+                <x-input label="Harga" wire:model="price" prefix="Rp" money="IDR" />
+                <x-input label="Stok" wire:model="stok" type="number" min="1"/>
             </div>
         </div>
 
@@ -102,15 +100,15 @@ new class extends Component {
 
         <div class="lg:grid grid-cols-5">
             <div class="col-span-2">
-                <x-header title="Details" subtitle="More about the user" size="text-2xl" />
+                <x-header title="Details" subtitle="More about the menu" size="text-2xl" />
             </div>
             <div class="col-span-3 grid gap-3">
-                <x-editor wire:model="bio" label="Bio" />
+                <x-editor wire:model="deskripsi" label="Deskripsi" hint="The great biography" />
             </div>
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" link="/users" />
+            <x-button label="Cancel" link="/menus" />
             {{-- The important thing here is `type="submit"` --}}
             {{-- The spinner property is nice! --}}
             <x-button label="Save" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />

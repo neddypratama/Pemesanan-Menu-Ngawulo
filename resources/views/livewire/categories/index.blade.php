@@ -1,16 +1,16 @@
 <?php
 
-use App\Models\Role;
+use App\Models\Kategori;
 use Livewire\Volt\Component;
 use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Rule;
+use Livewire\WithFileUploads;
 
 new class extends Component {
-    use Toast;
-    use WithPagination;
+    use Toast, WithPagination, WithFileUploads;
     public string $search = '';
 
     public bool $drawer = false;
@@ -28,13 +28,18 @@ new class extends Component {
 
     public bool $editModal = false; // Untuk menampilkan modal
 
-    public ?Role $editingRole = null; // Menyimpan data role yang sedang diedit
+    public ?Kategori $editingKategori = null; // Menyimpan data Kategori yang sedang diedit
 
-    public string $editingName = ''; // Menyimpan nilai input untuk nama role
+    public string $editingName = ''; // Menyimpan nilai input untuk nama Kategori
+    public string $editingImage = '';
 
     public bool $createModal = false; // Untuk menampilkan modal create
 
-    public string $newRoleName = ''; // Untuk menyimpan input nama role baru
+    public string $newKategoriName = ''; // Untuk menyimpan input nama Kategori baru
+    public string $newKategoriImage = '';
+
+    public $newphoto;
+    public $editphoto;
 
     // Clear filters
     public function clear(): void
@@ -47,45 +52,82 @@ new class extends Component {
     // Delete action
     public function delete($id): void
     {
-        $kategori = Role::findOrFail($id);
+        $kategori = Kategori::findOrFail($id);
+        if ($kategori->image && file_exists(public_path($kategori->image))) {
+            unlink(public_path($kategori->image));
+        }
         $kategori->delete();
-        $this->warning("Role $kategori->name akan dihapus", position: 'toast-top');
+        $this->warning("Kategori $kategori->name akan dihapus", position: 'toast-top');
     }
 
     public function create(): void
     {
-        $this->newRoleName = ''; // Reset input sebelum membuka modal
+        $this->newKategoriName = ''; // Reset input sebelum membuka modal
+        $this->newKategoriImage = '';
+        $this->newphoto = null;
         $this->createModal = true;
     }
 
     public function saveCreate(): void
     {
         $this->validate([
-            'newRoleName' => 'required|string|max:255',
+            'newKategoriName' => 'required|string|max:255',
+            'newphoto' => 'nullable|image|max:1024',
         ]);
 
-        Role::create(['name' => $this->newRoleName]);
+        // Upload file and save the avatar `url` on User model
+        if ($this->newphoto) {
+            $url = $this->newphoto->store('categories', 'public');
+            $this->newKategoriImage = "/storage/$url";
+        }
+
+        Kategori::create(['name' => $this->newKategoriName, 'image' => $this->newKategoriImage]);
 
         $this->createModal = false;
-        $this->success('Role created successfully.', position: 'toast-top');
+        $this->success('Kategori created successfully.', position: 'toast-top');
     }
 
     public function edit($id): void
     {
-        $this->editingRole = Role::find($id);
+        $this->editingKategori = Kategori::find($id);
 
-        if ($this->editingRole) {
-            $this->editingName = $this->editingRole->name;
+        if ($this->editingKategori) {
+            $this->editingName = $this->editingKategori->name;
+            $this->editphoto = $this->editingKategori->image;
             $this->editModal = true; // Tampilkan modal
         }
     }
 
     public function saveEdit(): void
     {
-        if ($this->editingRole) {
-            $this->editingRole->update(['name' => $this->editingName, 'updated_at' => now()]);
+        $this->validate([
+            'editingName' => 'required|string|max:255',
+            'editphoto' => 'nullable|image|max:1024',
+        ]);
+
+        if ($this->editingKategori) {
+            // Hapus gambar lama jika ada file baru diunggah
+            if ($this->editphoto instanceof \Illuminate\Http\UploadedFile) {
+                if ($this->editingKategori->image) {
+                    $oldImagePath = public_path(str_replace('/storage', 'storage', $this->editingKategori->image));
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+
+                // Simpan gambar baru
+                $url = $this->editphoto->store('categories', 'public');
+                $this->editingKategori->image = "/storage/$url";
+            }
+
+            // Update kategori
+            $this->editingKategori->update([
+                'name' => $this->editingName,
+                'image' => $this->editingKategori->image,
+            ]);
+
             $this->editModal = false;
-            $this->success('Role updated successfully.', position: 'toast-top');
+            $this->success('Kategori updated successfully.', position: 'toast-top');
         }
     }
 
@@ -93,17 +135,18 @@ new class extends Component {
     public function headers(): array
     {
         return [
+            ['key' => 'avatar', 'label' => '', 'class' => 'w-5'],
             ['key' => 'id', 'label' => '#'],
             ['key' => 'name', 'label' => 'Name', 'class' => 'w-100'],
-            ['key' => 'users_count', 'label' => 'User', 'class' => 'w-100'], // Gunakan `users_count`
+            ['key' => 'menus_count', 'label' => 'Menu', 'class' => 'w-100'], // Gunakan `users_count`
             ['key' => 'created_at', 'label' => 'Tanggal dibuat', 'class' => 'w-30'],
         ];
     }
 
-    public function roles(): LengthAwarePaginator
+    public function kategori(): LengthAwarePaginator
     {
-        return Role::query()
-            ->withCount('users') // Menghitung jumlah users di setiap role
+        return Kategori::query()
+            ->withCount('menus') // Menghitung jumlah users di setiap role
             ->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))
             ->orderBy(...array_values($this->sortBy))
             ->paginate($this->perPage);
@@ -119,7 +162,7 @@ new class extends Component {
             }
         }
         return [
-            'roles' => $this->roles(),
+            'kategori' => $this->kategori(),
             'headers' => $this->headers(),
             'perPage' => $this->perPage,
             'pages' => $this->page,
@@ -139,16 +182,16 @@ new class extends Component {
 
 <div>
     <!-- HEADER -->
-    <x-header title="Roles" separator progress-indicator>
+    <x-header title="Categories" separator progress-indicator>
         <x-slot:actions>
             <x-button label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
         </x-slot:actions>
     </x-header>
 
     <!-- FILTERS -->
-    <div class="grid grid-cols-1 md:grid-cols-8 gap-4  items-end mb-4">
+    <div class="grid grid-cols-1 md:grid-cols-8 gap-4 items-end mb-4">
         <div class="md:col-span-1">
-            <x-select label="Show entries" :options="$pages" wire:model.live="perPage" class="w-15" />
+            <x-select label="Show entries" :options="$pages" wire:model.live="perPage" />
         </div>
         <div class="md:col-span-6">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass"
@@ -156,29 +199,35 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" />
+                class="" responsive/>
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$roles" :sort-by="$sortBy" with-pagination
+        <x-table :headers="$headers" :rows="$kategori" :sort-by="$sortBy" with-pagination
             @row-click="$wire.edit($event.detail.id)">
-            @scope('cell_users_count', $role)
-                <span>{{ $role->users_count }}</span>
+            @scope('cell_avatar', $kategori)
+                <x-avatar image="{{ $kategori->image ?? '/empty-user.jpg' }}" class="!w-10" />
             @endscope
-            @scope('actions', $roles)
-                <x-button icon="o-trash" wire:click="delete({{ $roles['id'] }})"
-                    wire:confirm="Yakin ingin menghapus {{ $roles['name'] }}?" spinner
+            @scope('cell_menus_count', $kategori)
+                <span>{{ $kategori->menus_count }}</span>
+            @endscope
+            @scope('actions', $kategori)
+                <x-button icon="o-trash" wire:click="delete({{ $kategori['id'] }})"
+                    wire:confirm="Yakin ingin menghapus {{ $kategori['name'] }}?" spinner
                     class="btn-ghost btn-sm text-red-500" />
             @endscope
         </x-table>
     </x-card>
 
-    <x-modal wire:model="createModal" title="Create Role">
+    <x-modal wire:model="createModal" title="Create Kategori">
         <div class="grid gap-4">
-            <x-input label="Role Name" wire:model.live="newRoleName" />
+            <x-file label="Image" wire:model.live="newphoto" accept="image/png, image/jpeg" crop-after-change>
+                <img src="{{ $kategori->image ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
+            </x-file>
+            <x-input label="Kategori Name" wire:model.live="newKategoriName" />
         </div>
 
         <x-slot:actions>
@@ -187,9 +236,12 @@ new class extends Component {
         </x-slot:actions>
     </x-modal>
 
-    <x-modal wire:model="editModal" title="Edit Role">
+    <x-modal wire:model="editModal" title="Edit Kategori">
         <div class="grid gap-4">
-            <x-input label="Role Name" wire:model.live="editingName" />
+            <x-file label="Image" wire:model.live="editphoto" accept="image/png, image/jpeg" crop-after-change>
+                <img src="{{ $kategori->image ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
+            </x-file>
+            <x-input label="Kategori Name" wire:model.live="editingName" />
         </div>
 
         <x-slot:actions>

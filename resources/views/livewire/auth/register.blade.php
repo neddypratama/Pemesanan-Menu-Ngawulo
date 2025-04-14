@@ -29,6 +29,9 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
     #[Rule('nullable|image|max:1024')]
     public $photo;
 
+    public string $avatar = '';
+    public int $role_id = 4;
+
     public function mount()
     {
         // It is logged in
@@ -41,9 +44,11 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
     {
         $data = $this->validate();
 
+        $data['role_id'] = $this->role_id;
+
         if ($this->photo) {
             $url = $this->photo->store('users', 'public');
-            $this->user->update(['avatar' => "/storage/$url"]);
+            $data['avatar'] = "/storage/$url";
         }
         
         $data['password'] = Hash::make($data['password']);

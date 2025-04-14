@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -31,15 +32,25 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    public function country(): BelongsTo
+    public function role(): BelongsTo
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(Role::class);
     }
 
-    public function languages(): BelongsToMany
+    public function transaksi(): HasMany
     {
-        return $this->belongsToMany(Language::class);
+        return $this->hasMany(Transaksi::class);
     }
+
+    // public function country(): BelongsTo
+    // {
+    //     return $this->belongsTo(Country::class);
+    // }
+
+    // public function languages(): BelongsToMany
+    // {
+    //     return $this->belongsToMany(Language::class);
+    // }
 
     /**
      * Get the attributes that should be cast.

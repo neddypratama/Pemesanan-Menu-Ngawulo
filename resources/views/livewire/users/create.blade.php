@@ -2,8 +2,7 @@
 
 use Livewire\Volt\Component;
 use App\Models\User;
-use App\Models\Country;
-use App\Models\Language;
+use App\Models\Role;
 use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
@@ -21,6 +20,9 @@ new class extends Component {
     #[Rule('required|email|unique:users')]
     public string $email = '';
 
+    #[Rule('required|digits_between:10,13|regex:/^[0-9]+$/|unique:users')]
+    public string $no_hp = '';
+
     #[Rule('required|min:8|confirmed')]
     public string $password = '';
 
@@ -28,15 +30,12 @@ new class extends Component {
     public string $password_confirmation = '';
 
     #[Rule('required|sometimes')]
-    public ?int $country_id = null;
+    public ?int $role_id = null;
 
     #[Rule('nullable|image|max:1024')]
     public $photo;
 
     public string $avatar = '';
-
-    #[Rule('required')]
-    public array $my_languages = [];
 
     #[Rule('sometimes')]
     public ?string $bio = null;
@@ -44,8 +43,7 @@ new class extends Component {
     public function with(): array
     {
         return [
-            'countries' => Country::all(),
-            'languages' => Language::all(),
+            'roles' => Role::all(),
         ];
     }
 
@@ -86,11 +84,14 @@ new class extends Component {
                 <x-file label="Avatar" wire:model="photo" accept="image/png, image/jpeg" crop-after-change>
                     <img src="{{ $user->avatar ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
                 </x-file>
-                <x-input label="Name" wire:model="name" />
-                <x-input label="Email" wire:model="email" />
-                <x-password label="Password" wire:model="password" right />
-                <x-password label="Password Confirmation" wire:model="password_confirmation" right />
-                <x-select label="Country" wire:model="country_id" :options="$countries" placeholder="---" />
+                <x-input label="Name" wire:model="name" placeholder="Contoh: Budi Santoso" />
+                <x-input label="Email" wire:model="email" placeholder="Contoh: budi@example.com" />
+                <x-input label="No Telepon" wire:model="no_hp" type="text" placeholder="Contoh: 081234567890"
+                    oninput="this.value = this.value.replace(/\D/g, '')" />
+                <x-password label="Password" wire:model="password" right placeholder="Minimal 8 karakter" />
+                <x-password label="Password Confirmation" wire:model="password_confirmation" right
+                    placeholder="Ulangi password" />
+                <x-select label="Role" wire:model="role_id" :options="$roles" placeholder="Pilih peran pengguna" />
             </div>
         </div>
 
@@ -102,9 +103,7 @@ new class extends Component {
                 <x-header title="Details" subtitle="More about the user" size="text-2xl" />
             </div>
             <div class="col-span-3 grid gap-3">
-                {{-- Multi selection --}}
-                <x-choices-offline label="My languages" wire:model="my_languages" :options="$languages" searchable />
-                <x-editor wire:model="bio" label="Bio" hint="The great biography" />
+                <x-editor wire:model="bio" label="Bio" hint="Ceritakan sedikit tentang diri Anda" placeholder="Contoh: Saya seorang pengembang web dengan pengalaman 5 tahun." />
             </div>
         </div>
 

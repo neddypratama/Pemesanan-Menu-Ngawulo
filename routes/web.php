@@ -20,7 +20,7 @@ Route::get('/logout', function () {
     request()->session()->invalidate();
     request()->session()->regenerateToken();
  
-    return redirect('/');
+    return redirect('/login');
 });
  
 // Protected routes here
@@ -31,14 +31,37 @@ Route::middleware('auth')->group(function () {
         return redirect('/')->with('success', 'Email berhasil diverifikasi!');
     })->middleware('signed')->name('verification.verify');
 
-    Volt::route('/', 'index')->name('dashboard');
+    Volt::route('/dashboard', 'dashboard')->name('dashboard');
     
     Volt::route('/users', 'users.index');
     Volt::route('/users/create', 'users.create');
     Volt::route('/users/{user}/edit', 'users.edit');
 
     Volt::route('/roles', 'roles.index');
-    Volt::route('/roles/create', 'roles.create');
-    Volt::route('/roles/{role}/edit', 'roles.edit');
-    // ... more
+
+    Volt::route('/categories', 'categories.index');
+
+    Volt::route('/menus', 'menus.index');
+    Volt::route('/menus/create', 'menus.create');
+    Volt::route('/menus/{menu}/edit', 'menus.edit');
+
+    Volt::route('/recipes', 'recipes.index');
+
+    Volt::route('/ratings', 'ratings.index');
+
+    Volt::route('/orders', 'orders.index');
+    Volt::route('/orders/create', 'orders.create');
+    Volt::route('/orders/{id}/edit', 'orders.edit')->name('orders.edit');
+    Volt::route('/orders/{transaksi}/detail', 'orders.detail');
+
+    Volt::route('/customers', 'customers.index');
+    Volt::route('/customers/{customer}/detail', 'customers.detail');
+    
+    Volt::route('/detail/{menu}', 'detail')->name('detail');
+    Volt::route('/', 'index');
+    Volt::route('/my-orders', 'my-order');
+    Volt::route('/my-orders/{transaksi}', 'detail-order')->name('orders.show');
+
+    Volt::route('/cart', 'cart');
 });
+

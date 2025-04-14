@@ -16,9 +16,12 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
 
     public function mount()
     {
-        // It is logged in
-        if (auth()->user()) {
-            return redirect('/');
+        if (auth()->check()) {
+            if (auth()->user()->role_id != 4) {
+                return redirect('/dashboard');
+            } else {
+                return redirect('/');
+            }
         }
     }
 
@@ -30,7 +33,12 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
             request()->session()->regenerate();
 
             session()->flash('success', 'Selamat Anda berhasil login!');
-            return redirect()->intended('/');
+
+            if (auth()->user()->role_id != 4) {
+                return redirect()->intended('/dashboard');
+            } else {
+                return redirect()->intended('/');
+            }
         }
 
         $this->addError('email', 'The provided credentials do not match our records.');
@@ -42,7 +50,8 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
 <div class="md:w-96 mx-auto mt-20">
     <div class="flex items-center gap-2 mb-6">
         <x-icon name="o-square-3-stack-3d" class="w-6 -mb-1 text-purple-500" />
-        <span class="font-bold text-3xl me-3 bg-gradient-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent ">
+        <span
+            class="font-bold text-3xl me-3 bg-gradient-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent ">
             app
         </span>
     </div>
