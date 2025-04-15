@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('menu_id')->constrained('menus');
             $table->integer('qty');
+            $table->text('keterangan')->nullable();
             $table->foreignId('transaksi_id')->constrained('transaksis');
             $table->timestamps();
         });

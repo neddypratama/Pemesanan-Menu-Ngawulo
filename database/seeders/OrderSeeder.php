@@ -24,6 +24,7 @@ class OrderSeeder extends Seeder
                 DB::table('orders')->insert([
                     'menu_id' => $menu->id,
                     'qty' => rand(1, 5),
+                    'keterangan' => 'Transaksi contoh ke-' . $menu->id,
                     'transaksi_id' => $transaksi->id,
                     'created_at' => Carbon::now()->subDays(rand(0, 30)),
                     'updated_at' => Carbon::now()->subDays(rand(0, 30)),

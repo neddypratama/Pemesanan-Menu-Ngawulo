@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Volt::route('/my-orders', 'my-order');
     Volt::route('/my-orders/{transaksi}', 'detail-order')->name('orders.show');
 
-    Volt::route('/cart', 'cart');
+    Volt::route('/cart', 'detail-cart');
+    Volt::route('/checkout/{invoice}', 'checkout');
 });
 

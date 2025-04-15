@@ -5,8 +5,7 @@ use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
-new class extends Component
-{
+new class extends Component {
     use Toast;
     public array $cartItems = [];
 
@@ -18,10 +17,7 @@ new class extends Component
     public function loadCart(): void
     {
         if (Auth::check()) {
-            $this->cartItems = Cart::with('menu')
-                ->where('user_id', Auth::id())
-                ->get()
-                ->toArray();
+            $this->cartItems = Cart::with('menu')->where('user_id', Auth::id())->get()->toArray();
         }
     }
 
@@ -62,41 +58,32 @@ new class extends Component
     }
 
     protected $listeners = ['cartUpdated' => 'loadCart'];
-
-    public function goToCart()
-    {
-        return redirect()->route('orders.show');
-    }
 };
 ?>
 
 <x-dropdown class="relative">
     <x-slot:trigger>
-        <x-button
-            label="Cart"
-            icon="fas.cart-shopping"
-            class="btn-ghost btn-sm"
-            responsive
-            badge="{{ count($cartItems) }}"
-        />
+        <x-button label="Cart" icon="fas.cart-shopping" class="btn-ghost btn-sm" responsive
+            badge="{{ count($cartItems) }}" />
     </x-slot:trigger>
 
     <div class="w-80 px-4 py-3 space-y-3">
         @forelse ($cartItems as $item)
             <div class="flex items-start gap-3 border-b pb-3">
-                <img src="{{ $item['menu']['photo'] }}" alt="{{ $item['menu']['name'] }}" class="w-12 h-12 rounded object-cover" />
+                <img src="{{ $item['menu']['photo'] }}" alt="{{ $item['menu']['name'] }}"
+                    class="w-12 h-12 rounded object-cover" />
                 <div class="flex-1">
                     <div class="text-sm font-semibold">{{ $item['menu']['name'] }}</div>
                     <div class="text-xs mb-1">Rp. {{ number_format($item['menu']['price'], 0, ',', '.') }}</div>
-                    <div class="flex items-center gap-2 text-xs">
-                        <button wire:click.stop="decrementQty({{ $item['id'] }})" class="bg-gray-200 px-2 py-0.5 rounded">−</button>
-                        <span class="text-sm font-semibold">{{ $item['qty'] }}</span>
-                        <button wire:click.stop="incrementQty({{ $item['id'] }})" class="bg-gray-200 px-2 py-0.5 rounded">+</button>
-                    </div>
                 </div>
-                <button
-                    wire:click="deleteCartItem({{ $item['id'] }})"
-                    class="text-pink-500 hover:text-pink-700"
+                <div class="flex items-center text-xs">
+                    <button wire:click.stop="decrementQty({{ $item['id'] }})"
+                        class="bg-gray-200 px-2 py-0.5 rounded">−</button>
+                    <span class="text-sm font-semibold mx-2">{{ $item['qty'] }}</span>
+                    <button wire:click.stop="incrementQty({{ $item['id'] }})"
+                        class="bg-gray-200 px-2 py-0.5 rounded">+</button>
+                </div>
+                <button wire:click="deleteCartItem({{ $item['id'] }})" class="text-pink-500 hover:text-pink-700"
                     title="Hapus item">
                     <x-icon name="fas.trash" class="w-4 h-4" />
                 </button>
@@ -117,18 +104,14 @@ new class extends Component
             </div>
 
             <div class="flex justify-between mt-3 gap-2">
-                <button
-                    wire:click="clearCart"
-                    class="text-red-500 text-sm flex items-center gap-1 hover:text-red-700"
-                >
+                <button wire:click="clearCart" class="text-red-500 text-sm flex items-center gap-1 hover:text-red-700">
                     <x-icon name="fas.trash" class="w-4 h-4" />
                     Trash cart
                 </button>
 
-                <a href="" class="bg-violet-600 hover:bg-violet-700 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 ml-auto">
+                <x-button link="/cart" class="btn-primary ml-auto flex items-center gap-2" size="sm" icon="fas.arrow-right">
                     Go to cart
-                    <x-icon name="fas.arrow-right" class="w-4 h-4" />
-                </a>
+                </x-button>
             </div>
         @endif
     </div>

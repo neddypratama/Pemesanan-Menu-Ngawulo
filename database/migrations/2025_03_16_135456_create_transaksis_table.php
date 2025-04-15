@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('invoice');
             $table->foreignId('user_id')->constrained('users');
             $table->dateTime('tanggal');
-            $table->text('keterangan')->nullable();
             $table->integer('total');
             $table->enum('status', ['success', 'pending', 'cancel']);
             $table->timestamps();

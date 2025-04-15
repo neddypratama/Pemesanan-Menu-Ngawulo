@@ -14,6 +14,7 @@ class Order extends Model
         'menu_id',
         'transaksi_id',
         'qty',
+        'keterangan',
         'created_at',
         'updated_at',
     ];

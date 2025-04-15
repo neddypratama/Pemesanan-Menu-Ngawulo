@@ -20,7 +20,6 @@ class TransaksiSeeder extends Seeder
                 'invoice' => 'INV-' . date('Ymd') . '-' . Str::random(4),
                 'user_id' => rand(1, 10), // Pastikan ada user dengan ID 1-10
                 'tanggal' => Carbon::now()->subDays(rand(0, 30)),
-                'keterangan' => 'Transaksi contoh ke-' . $i,
                 'total' => rand(50000, 500000), // Total transaksi dalam rentang tertentu
                 'status' => ['success', 'pending', 'cancel'][rand(0, 2)], // Status acak
                 'created_at' => Carbon::now()->subDays(rand(0, 30)),

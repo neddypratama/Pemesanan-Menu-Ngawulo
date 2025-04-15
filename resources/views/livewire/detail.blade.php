@@ -28,9 +28,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
     {
         $user = Auth::user();
         if ($user) {
-            $this->isInCart = Cart::where('user_id', $user->id)
-                ->where('menu_id', $this->menu->id)
-                ->exists();
+            $this->isInCart = Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->exists();
         } else {
             $this->isInCart = false;
         }
@@ -43,9 +41,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
             return;
         }
 
-        $cartItem = Cart::where('user_id', $user->id)
-            ->where('menu_id', $this->menu->id)
-            ->first();
+        $cartItem = Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->first();
 
         if ($cartItem) {
             $cartItem->increment('qty');
@@ -59,29 +55,50 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
         $this->checkCartStatus();
         $this->dispatch('cartUpdated');
-        $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
-        // session()->flash('status', 'Produk berhasil ditambahkan ke keranjang!');
+        // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
+        session()->flash('status', 'Produk berhasil ditambahkan ke keranjang!');
     }
 
     public function removeFromCart(): void
     {
         $user = Auth::user();
-        if (!$user) return;
+        if (!$user) {
+            return;
+        }
 
-        Cart::where('user_id', $user->id)
-            ->where('menu_id', $this->menu->id)
-            ->delete();
+        Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->delete();
 
         $this->checkCartStatus();
         $this->dispatch('cartUpdated');
-        $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
-        // session()->flash('status', 'Produk dihapus dari keranjang.');
+        // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
+        session()->flash('status', 'Produk dihapus dari keranjang.');
     }
 };
 ?>
 
 <div class="max-w-6xl mx-auto px-4 py-10">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start">
+    @if (session('status') || session('error'))
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show"
+            class="fixed top-5 right-5 z-50 max-w-xs w-full p-4 rounded-lg shadow text-sm text-white transition duration-300"
+            :class="{
+                'bg-green-500': '{{ session('status') }}',
+                'bg-red-500': '{{ session('error') }}'
+            }"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2">
+            <div class="flex justify-between items-center">
+                <span class="flex-1">
+                    {{ session('status') ?? session('error') }}
+                </span>
+                <button @click="show = false" class="ml-2">
+                    &times;
+                </button>
+            </div>
+        </div>
+    @endif
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start" wire:poll="checkCartStatus">
         <!-- Gambar Produk -->
         <div class="lg:col-span-4 flex justify-center md:justify-start">
             <img src="{{ $menu->photo }}" alt="{{ $menu->name }}"
@@ -99,15 +116,13 @@ new #[Layout('components.layouts.buy')] class extends Component {
             <!-- Add / Remove from Cart -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 @if ($isInCart)
-                    <x-button wire:click="removeFromCart"
-                        class="flex items-center text-sm rounded text-red-500 hover:text-red-700 btn-sm">
-                        <x-icon name="fas.trash" class="w-4 h-4" />
+                    <x-button wire:click="removeFromCart" class="flex items-center text-sm rounded btn-error btn-sm"
+                        icon="fas.trash">
                         Hapus dari keranjang
                     </x-button>
                 @else
-                    <x-button wire:click="addToCart"
-                        class="flex items-center text-sm rounded btn-sm">
-                        <x-icon name="fas.shopping-cart" class="w-4 h-4" />
+                    <x-button wire:click="addToCart" class="flex items-center text-sm rounded btn-sm btn-primary"
+                        icon="fas.shopping-cart">
                         Tambah ke keranjang
                     </x-button>
                 @endif
@@ -133,7 +148,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
         <!-- Tombol Kembali -->
         <div class="lg:col-span-2 flex justify-end">
-            <x-button label="Kembali" link="/" class="btn-ghost" icon="fas.arrow-left" />
+            <x-button label="Kembali" link="/" class="btn-gost" icon="fas.arrow-left" />
         </div>
     </div>
 </div>

@@ -88,6 +88,7 @@ new class extends Component {
             'user_id' => $this->user_id,
             'tanggal' => $this->tanggal,
             'keterangan' => $this->keterangan,
+            'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

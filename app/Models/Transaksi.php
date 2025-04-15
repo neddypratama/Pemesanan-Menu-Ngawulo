@@ -14,8 +14,8 @@ class Transaksi extends Model
         'invoice',
         'tanggal',
         'total',
-        'keterangan',
         'user_id',
+        'status',
         'created_at',
         'updated_at',
     ];

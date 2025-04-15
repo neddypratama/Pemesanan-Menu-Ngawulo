@@ -14,6 +14,7 @@ class Cart extends Model
         'menu_id',
         'user_id',
         'qty',
+        'keterangan',
         'created_at',
         'updated_at',
     ];

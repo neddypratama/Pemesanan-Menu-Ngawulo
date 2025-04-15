@@ -72,7 +72,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
     public function goToDetail($menuId)
     {
-        return redirect()->route('detail', ['menu' => $menuId]);
+        $this->js("window.dispatchEvent(new CustomEvent('navigate-to-detail', { detail: { menu: $menuId } }));");
     }
 };
 ?>
@@ -140,3 +140,11 @@ new #[Layout('components.layouts.buy')] class extends Component {
         @endforelse
     </div>
 </div>
+
+<script>
+    window.addEventListener('navigate-to-detail', event => {
+        const id = event.detail.menu;
+        console.log(id);
+        window.Livewire.navigate(`/detail/${id}`);
+    });
+</script>
