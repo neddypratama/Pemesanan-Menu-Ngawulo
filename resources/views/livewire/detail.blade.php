@@ -57,6 +57,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->dispatch('cartUpdated');
         // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
         session()->flash('status', 'Produk berhasil ditambahkan ke keranjang!');
+        logActivity('create', 'Menambahkan menu ' . $this->menu->name .' ke cart' );
+
     }
 
     public function removeFromCart(): void
@@ -72,6 +74,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->dispatch('cartUpdated');
         // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
         session()->flash('status', 'Produk dihapus dari keranjang.');
+        logActivity('delete', 'Menghapus menu ' . $this->menu->name .' ke cart' );
     }
 };
 ?>

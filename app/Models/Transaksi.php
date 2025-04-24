@@ -16,6 +16,9 @@ class Transaksi extends Model
         'total',
         'user_id',
         'status',
+        'total',
+        'midtrans_id',
+        'token',
         'created_at',
         'updated_at',
     ];

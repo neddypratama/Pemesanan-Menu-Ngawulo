@@ -260,9 +260,9 @@ new class extends Component {
 
     <x-modal wire:model="detailModal" title="Detail Review">
         <div class="grid gap-4">
-            <x-input label="Menu" wire:model.live="detailMenu" readonly/>
-            <x-rating label="Rating" wire:model.live="detailRate" class="bg-warning" total="5" disabled/>
-            <x-editor wire:model.live="detailReview" label="Review" hint="The great review" readonly/>
+            <x-input label="Menu" wire:model.live="detailMenu" readonly />
+            <x-rating label="Rating" wire:model.live="detailRate" class="bg-warning" total="5" disabled />
+            <x-editor wire:model.live="detailReview" label="Review" hint="The great review" readonly />
         </div>
 
         <x-slot:actions>

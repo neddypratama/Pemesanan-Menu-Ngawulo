@@ -29,9 +29,11 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
     public function simpanCatatan()
     {
-        Cart::where('id', $this->selectedCartItemId)->update([
+        $cart = Cart::where('id', $this->selectedCartItemId);
+        $cart->update([
             'keterangan' => $this->catatan,
         ]);
+        logActivity('update', 'Menambahkan keterangan untuk ' . $cart->menu->name );
 
         $this->showCatatanModal = false;
         $this->fetchCart();
@@ -57,6 +59,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->fetchCart();
         $this->dispatch('cartUpdated');
         $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+        logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name .' di cart' );
     }
 
     public function decrementQty($id)
@@ -68,11 +71,14 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->fetchCart();
         $this->dispatch('cartUpdated');
         $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+        logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name .' di cart' );
     }
 
     public function removeItem($id)
     {
-        Cart::destroy($id);
+        $cart = Cart::find($id);
+        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart' );
+        $cart->delete();
         $this->fetchCart();
         $this->dispatch('cartUpdated');
         $this->error('Dihapus dari keranjang!', position: 'toast-buttom');
@@ -103,14 +109,16 @@ new #[Layout('components.layouts.buy')] class extends Component {
             'tanggal' => now()->format('Y-m-d\TH:i'),
             'user_id' => $userId,
             'total' => $this->total,
-            'status' => 'pending', // atau sesuai kebutuhan
+            'status' => 'new', // atau sesuai kebutuhan
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
+        logActivity('create', 'Membuat transaksi baru dengan invoice ' . $this->invoice );
+
         // 2. Masukkan item cart ke order detail
         foreach ($this->cart as $item) {
-            Order::create([
+            $order = Order::create([
                 'transaksi_id' => $transaction->id,
                 'menu_id' => $item['menu_id'],
                 'qty' => $item['qty'],
@@ -118,10 +126,13 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            logActivity('create', 'Membuat order dengan menu ' . $order->menu->name);
         }
 
         // 3. Hapus semua cart
-        Cart::where('user_id', $userId)->delete();
+        $cart = Cart::where('user_id', $userId);
+        logActivity('delete', 'Menghapus cart oleh user ' . auth()->user()->name );
+        $cart->delete();
 
         // 4. Perbarui cart di frontend
         $this->fetchCart();

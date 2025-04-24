@@ -40,9 +40,11 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     <div class="flex-col">
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="font-semibold">{{ $order->orders->first()->menu->name ?? 'Unknown Item' }}</div>
-                            <div class="text-sm text-gray-500 font-medium">
-                                + {{ $order->orders->count() }} item{{ $order->orders->count() > 1 ? 's' : '' }}
-                            </div>
+                            @if ($order->orders->count() > 1)
+                                <div class="text-sm text-gray-500 font-medium">
+                                    + {{ $order->orders->count() - 1 }} item(s)
+                                </div>
+                            @endif
                         </div>
                         <div class="flex gap-3 align-center items-center">
                             <div class="text-sm text-gray-500">
@@ -58,12 +60,18 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 {{-- Status --}}
                 <div class="md:col-span-3 col-span-1 flex justify-start md:justify-end items-center md:items-center">
                     @php
-                        $status = strtolower($order->status ?? 'delivered');
+                        $status = strtolower($order->status ?? 'pending');
+
                         $iconMap = [
-                            'delivered' => 'check-circle',
+                            'success' => 'check-circle',
                             'pending' => 'clock',
-                            'cancelled' => 'x-circle',
+                            'error' => 'x-circle',
+                            'cancel' => 'minus-circle',
+                            'expire' => 'x-circle',
+                            'delivered' => 'truck',
+                            'done' => 'check-badge',
                         ];
+
                         $icon = $iconMap[$status] ?? 'question-mark-circle';
                     @endphp
 
@@ -71,14 +79,22 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     <x-icon :name="'o-' . $icon" class="w-6 h-6 text-gray-500 md:hidden" />
 
                     {{-- Badge untuk desktop --}}
-                    @if ($status === 'delivered')
-                        <x-badge value="Order delivered" class="bg-green-200 dark:text-black hidden md:inline" />
+                    @if ($status === 'new')
+                        <x-badge value="Pesanan berhasil" class="bg-orange-400 dark:text-black hidden md:inline" />
+                    @elseif ($status === 'success')
+                        <x-badge value="Pembayaran berhasil" class="bg-green-200 dark:text-black hidden md:inline" />
                     @elseif ($status === 'pending')
-                        <x-badge value="Waiting for payment" class="bg-yellow-200 dark:text-black hidden md:inline" />
-                    @elseif ($status === 'cancelled')
-                        <x-badge value="Order cancelled" class="bg-red-200 dark:text-black hidden md:inline" />
+                        <x-badge value="Menunggu pembayaran" class="bg-yellow-200 dark:text-black hidden md:inline" />
+                    @elseif ($status === 'error' || $status === 'expire')
+                        <x-badge value="Pembayaran gagal" class="bg-red-200 dark:text-black hidden md:inline" />
+                    @elseif ($status === 'cancel')
+                        <x-badge value="Pesanan dibatalkan" class="bg-gray-300 dark:text-black hidden md:inline" />
+                    @elseif ($status === 'deliver')
+                        <x-badge value="Pesanan dikirim" class="bg-blue-200 dark:text-black hidden md:inline" />
+                    @elseif ($status === 'done')
+                        <x-badge value="Pesanan selesai" class="bg-purple-200 dark:text-black hidden md:inline" />
                     @else
-                        <x-badge value="Unknown status" class="bg-gray-200 dark:text-black hidden md:inline" />
+                        <x-badge value="Status tidak diketahui" class="bg-gray-200 dark:text-black hidden md:inline" />
                     @endif
                 </div>
             </div>

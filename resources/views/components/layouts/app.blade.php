@@ -43,13 +43,11 @@
     <x-main>
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-
             {{-- BRAND --}}
             <x-app-brand class="p-5 pt-3" />
 
             {{-- MENU --}}
             <x-menu activate-by-route>
-
                 {{-- User --}}
                 @if ($user = auth()->user())
                     <x-menu-separator />
@@ -71,25 +69,42 @@
                     </x-list-item>
 
                     <x-menu-separator />
-                @endif
 
-                <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/" />
-                <x-menu-sub title="User Management" icon="fas.users-gear">
-                    <x-menu-item title="Users" icon="o-users" link="/users" />
-                    <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
-                </x-menu-sub>
-                <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
-                    <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
-                    <x-menu-item title="Transactions" icon="fas.sack-dollar" link="/orders" />
-                    <x-menu-item title="Customers" icon="fas.user" link="/customers" />
-                </x-menu-sub>
-                <x-menu-sub title="Warehouse" icon="fas.warehouse">
-                    <x-menu-item title="Categories" icon="fas.list" link="/categories" />
-                    <x-menu-item title="Menus" icon="fas.bowl-food" link="/menus" />
-                    <x-menu-item title="Recipes" icon="fas.receipt" link="/recipes" />
-                </x-menu-sub>
+                    {{-- Admin & Kasir (Role 1, 2) --}}
+                    @if (in_array($user->role_id, [1, 2]))
+                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
+
+                        <x-menu-sub title="User Management" icon="fas.users-gear">
+                            <x-menu-item title="Users" icon="o-users" link="/users" />
+                            <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
+                        </x-menu-sub>
+
+                        <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
+                            <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
+                            <x-menu-item title="Transactions" icon="fas.sack-dollar" link="/orders" />
+                            <x-menu-item title="Customers" icon="fas.user" link="/customers" />
+                        </x-menu-sub>
+
+                        <x-menu-sub title="Warehouse" icon="fas.warehouse">
+                            <x-menu-item title="Categories" icon="fas.list" link="/categories" />
+                            <x-menu-item title="Menus" icon="fas.bowl-food" link="/menus" />
+                            <x-menu-item title="Recipes" icon="fas.receipt" link="/recipes" />
+                        </x-menu-sub>
+                    @endif
+
+                    {{-- Juru Masak (Role 3) --}}
+                    @if ($user->role_id === 3)
+                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
+                        <x-menu-sub title="Kasir" icon="fas.cash-register">
+                            <x-menu-item title="Stok" icon="fas.bowl-food" link="/stok" />
+                            <x-menu-item title="Transaksi" icon="fas.right-left" link="/transaksi" />
+                            <x-menu-item title="Resep" icon="fas.book" link="/resep" />
+                        </x-menu-sub>
+                    @endif
+                @endif
             </x-menu>
         </x-slot:sidebar>
+
 
         {{-- The `$slot` goes here --}}
         <x-slot:content>

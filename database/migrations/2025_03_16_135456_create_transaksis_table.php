@@ -17,7 +17,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->dateTime('tanggal');
             $table->integer('total');
-            $table->enum('status', ['success', 'pending', 'cancel']);
+            $table->string('midtrans_id')->nullable();
+            $table->string('snap_token')->nullable();
+            $table->enum('status', ['new', 'success', 'deliver', 'done', 'pending', 'error', 'expire', 'cancel']);
             $table->timestamps();
             
         });

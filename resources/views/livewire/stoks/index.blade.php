@@ -29,23 +29,48 @@ new class extends Component {
 
     public int $stokFilter = 0;
 
+    public bool $editModal = false; // Untuk menampilkan modal
+    public ?Menu $editingMenu = null; // Menyimpan data Menu yang sedang diedit
+    public string $editingName = '';
+    public int $editingStok; // Menyimpan nilai input untuk nama Menu
+
+    public function edit($id): void
+    {
+        $this->editingMenu = Menu::find($id);
+
+        if ($this->editingMenu) {
+            $this->editingName = $this->editingMenu->name;
+            $this->editingStok = $this->editingMenu->stok;
+            $this->editModal = true; // Tampilkan modal
+        }
+    }
+
+    public function saveEdit(): void
+    {
+        $this->validate([
+            'editingName' => 'required|string|max:255',
+            'editingStok' => 'required|integer|min:1',
+        ]);
+
+        if ($this->editingMenu) {
+            // Update Menu
+            $this->editingMenu->update([
+                'name' => $this->editingName,
+                'stok' => $this->editingStok,
+            ]);
+
+            $this->editModal = false;
+            $this->success('Stok berhasil diubah.', position: 'toast-top');
+            logActivity('updated', 'Merubah stok menu ' . $this->editingName);
+        }
+    }
+
     // Clear filters
     public function clear(): void
     {
         $this->reset();
         $this->resetPage();
         $this->success('Filters cleared.', position: 'toast-top');
-    }
-
-    // Delete action
-    public function delete($id): void
-    {
-        $menu = Menu::findOrFail($id);
-        if ($menu->photo && file_exists(public_path($menu->photo))) {
-            unlink(public_path($menu->photo));
-        }
-        $menu->delete();
-        $this->warning("Menu $menu->name akan dihapus", position: 'toast-top');
     }
 
     // Table headers
@@ -105,11 +130,6 @@ new class extends Component {
 <div>
     <!-- HEADER -->
     <x-header title="Menus" separator progress-indicator>
-        @if (auth()->user()->role_id != 3)
-            <x-slot:actions>
-                <x-button label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" disabled />
-            </x-slot:actions>
-        @endif
     </x-header>
 
     <!-- FILTERS -->
@@ -131,16 +151,9 @@ new class extends Component {
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
         <x-table :headers="$headers" :rows="$menus" :sort-by="$sortBy" with-pagination
-            link="menus/{id}/edit?name={name}&kategori={kategori.name}">
+            @row-click="$wire.edit($event.detail.id)">
             @scope('cell_avatar', $menu)
                 <x-avatar image="{{ $menu->photo ?? '/empty-user.jpg' }}" class="!w-10" />
-            @endscope
-            @scope('actions', $menu)
-                @if (auth()->user()->role_id != 3)
-                    <x-button icon="o-trash" wire:click="delete({{ $menu['id'] }})"
-                        wire:confirm="Yakin ingin menghapus {{ $menu['name'] }}?" spinner
-                        class="btn-ghost btn-sm text-red-500" />
-                @endif
             @endscope
         </x-table>
     </x-card>
@@ -160,4 +173,16 @@ new class extends Component {
             <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
+
+    <x-modal wire:model="editModal" title="Edit Kategori">
+        <div class="grid gap-4">
+            <x-input label="Kategori Name" wire:model="editingName" />
+            <x-input label="Stok" wire:model="editingStok" type="number" min="1"/>
+        </div>
+
+        <x-slot:actions>
+            <x-button label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
+            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
+        </x-slot:actions>
+    </x-modal>
 </div>

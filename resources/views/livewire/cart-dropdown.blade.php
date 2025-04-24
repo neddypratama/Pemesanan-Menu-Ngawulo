@@ -29,6 +29,7 @@ new class extends Component {
             $cart->save();
             $this->loadCart();
             $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+            logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name .' di cart' );
         }
     }
 
@@ -40,19 +41,24 @@ new class extends Component {
             $cart->save();
             $this->loadCart();
             $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+            logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name .' di cart' );
         }
     }
 
     public function deleteCartItem($id): void
     {
-        Cart::where('id', $id)->where('user_id', Auth::id())->delete();
+        $cart = Cart::where('id', $id)->where('user_id', Auth::id());
+        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart' );
+        $cart->delete();
         $this->loadCart();
         $this->error('Dihapus dari keranjang!', position: 'toast-buttom');
     }
 
     public function clearCart(): void
     {
-        Cart::where('user_id', Auth::id())->delete();
+        $cart = Cart::where('user_id', Auth::id());
+        logActivity('delete', 'Menghapus cart oleh user ' . Auth::name() );
+        $cart->delete();
         $this->loadCart();
         $this->error('Keranjang dihapus!', position: 'toast-buttom');
     }

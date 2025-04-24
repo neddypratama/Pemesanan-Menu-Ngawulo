@@ -15,6 +15,7 @@ class Order extends Model
         'transaksi_id',
         'qty',
         'keterangan',
+        'rating',
         'created_at',
         'updated_at',
     ];
