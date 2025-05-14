@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GoogleController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -12,6 +13,8 @@ Route::middleware('guest')->group(function () {
     Volt::route('/register', 'auth.register');
     Volt::route('/forgot-password', 'auth.forgot-password')->name('password.request');
     Volt::route('/reset-password/{token}', 'auth.password-reset')->name('password.reset');
+    Route::get('/auth-google-redirect', [GoogleController::class, 'google_redirect'])->name('google-redirect');
+    Route::get('/auth-google-callback', [GoogleController::class, 'google_callback'])->name('google-callback');
 });
 
 // ======================
@@ -36,6 +39,10 @@ Route::middleware('auth')->group(function () {
         return redirect('/')->with('success', 'Email berhasil diverifikasi!');
     })->middleware('signed')->name('verification.verify');
 
+    Route::middleware('role:1,2,3')->group(function() {
+        Volt::route('/dashboard', 'dashboard');
+    });
+
     // ======================
     // 👤 ROLE: 4 (Pelanggan)
     // ======================
@@ -57,6 +64,8 @@ Route::middleware('auth')->group(function () {
         Volt::route('/menus/create', 'menus.create');
         Volt::route('/menus', 'menus.index');
         Volt::route('/menus/{menu}/edit', 'menus.edit');
+
+        Volt::route('/ratings', 'ratings.index');
 
         Volt::route('/recipes', 'recipes.index');
 

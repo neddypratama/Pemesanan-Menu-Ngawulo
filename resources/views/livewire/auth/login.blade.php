@@ -17,10 +17,10 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
     public function mount()
     {
         if (auth()->check()) {
-            if (auth()->user()->role_id != 4) {
-                return redirect('/dashboard');
-            } else {
+            if (auth()->user()->role_id === 4) {
                 return redirect('/');
+            } else {
+                return redirect('/dashboard');
             }
         }
     }
@@ -34,10 +34,10 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
 
             session()->flash('success', 'Selamat Anda berhasil login!');
 
-            if (auth()->user()->role_id != 4) {
-                return redirect()->intended('/dashboard');
-            } else {
+            if (auth()->user()->role_id === 4) {
                 return redirect()->intended('/');
+            } else {
+                return redirect()->intended('/dashboard');
             }
         }
 
@@ -52,7 +52,7 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
         <x-icon name="o-square-3-stack-3d" class="w-6 -mb-1 text-purple-500" />
         <span
             class="font-bold text-3xl me-3 bg-gradient-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent ">
-            app
+            Ngawulo
         </span>
     </div>
 
@@ -66,5 +66,11 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
             <x-button label="Create an account" class="btn-secondary" link="/register" />
             <x-button label="Login" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="login" />
         </x-slot:actions>
+        <hr>
+        <a href="{{ route('google-redirect') }}"
+            class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded hover:bg-yellow-600">
+            <i class="fa-brands fa-google mr-2"></i>
+            Login dengan Google
+        </a>
     </x-form>
 </div>

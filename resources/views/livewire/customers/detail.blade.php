@@ -20,6 +20,7 @@ new class extends Component {
     public bool $drawer = false;
     public array $sortBy = ['column' => 'id', 'direction' => 'asc'];
     public int $perPage = 10;
+    public $page = [['id' => 10, 'name' => '10'], ['id' => 25, 'name' => '25'], ['id' => 50, 'name' => '50'], ['id' => 100, 'name' => '100']];
 
     public function clear(): void
     {
@@ -75,6 +76,7 @@ new class extends Component {
             'headers' => $this->headers(),
             'users' => User::all(),
             'perPage' => $this->perPage,
+            'page' => $this->page,
         ];
     }
 
@@ -158,7 +160,7 @@ new class extends Component {
     <!-- Filter -->
     <div class="grid grid-cols-1 md:grid-cols-8 gap-4 items-end mb-4 mt-5">
         <div class="md:col-span-1">
-            <x-select label="Show entries" :options="[10, 25, 50, 100]" wire:model.live="perPage" />
+            <x-select label="Show entries" :options="$page" wire:model.live="perPage" />
         </div>
         <div class="md:col-span-7">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />

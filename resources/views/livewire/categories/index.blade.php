@@ -56,6 +56,7 @@ new class extends Component {
         if ($kategori->image && file_exists(public_path($kategori->image))) {
             unlink(public_path($kategori->image));
         }
+        logActivity('deleted', 'Menghapus data kategori ' . $kategori->name);
         $kategori->delete();
         $this->warning("Kategori $kategori->name akan dihapus", position: 'toast-top');
     }
@@ -82,6 +83,8 @@ new class extends Component {
         }
 
         Kategori::create(['name' => $this->newKategoriName, 'image' => $this->newKategoriImage]);
+
+        logActivity('created', $this->newKategoriName . ' ditambahkan');
 
         $this->createModal = false;
         $this->success('Kategori created successfully.', position: 'toast-top');
@@ -125,6 +128,8 @@ new class extends Component {
                 'name' => $this->editingName,
                 'image' => $this->editingKategori->image,
             ]);
+
+            logActivity('updated', 'Merubah data kategori ' . $this->editingName);
 
             $this->editModal = false;
             $this->success('Kategori updated successfully.', position: 'toast-top');

@@ -86,15 +86,17 @@ new class extends Component {
             'user_id' => $this->user_id,
             'keterangan' => $this->keterangan,
         ]);
+        logActivity('updated', 'Merubah data transaksi ' . $this->transaksi->invoice);
 
         // Hapus order lama dan tambahkan yang baru
         $this->transaksi->orders()->delete();
         foreach ($this->orders as $order) {
-            Order::create([
+            $order = Order::create([
                 'transaksi_id' => $this->transaksi->id,
                 'menu_id' => $order['menu_id'],
                 'qty' => $order['qty'],
             ]);
+            logActivity('updated', 'Merubah data order dari ' . $order->id);
         }
 
         // Notifikasi sukses

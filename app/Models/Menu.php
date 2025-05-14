@@ -31,4 +31,9 @@ class Menu extends Model
         return $this->hasMany(Rating::class);
     }
 
+    public function cart()
+    {
+        return $this->hasMany(Cart::class);
+    }
+
 }

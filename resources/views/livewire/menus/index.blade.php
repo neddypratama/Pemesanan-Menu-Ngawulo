@@ -7,6 +7,8 @@ use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\MenuExport;
 
 new class extends Component {
     use Toast;
@@ -44,6 +46,7 @@ new class extends Component {
         if ($menu->photo && file_exists(public_path($menu->photo))) {
             unlink(public_path($menu->photo));
         }
+        logActivity('deleted', 'Menghapus data menu ' . $menu->name);
         $menu->delete();
         $this->warning("Menu $menu->name akan dihapus", position: 'toast-top');
     }
@@ -98,6 +101,12 @@ new class extends Component {
             $this->resetPage();
         }
     }
+
+    public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        logActivity('export', 'Mencetak data customer');
+        return Excel::download(new MenuExport(), 'menus.xlsx');
+    }
 };
 
 ?>
@@ -107,7 +116,8 @@ new class extends Component {
     <x-header title="Menus" separator progress-indicator>
         @if (auth()->user()->role_id != 3)
             <x-slot:actions>
-                <x-button label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" disabled />
+                <x-button label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" />
+                <x-button label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
             </x-slot:actions>
         @endif
     </x-header>
@@ -123,7 +133,7 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" />
+                class="" responsive/>
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>

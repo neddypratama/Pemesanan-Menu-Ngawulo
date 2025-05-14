@@ -29,7 +29,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
     public function simpanCatatan()
     {
-        $cart = Cart::where('id', $this->selectedCartItemId);
+        $cart = Cart::with('menu')->find($this->selectedCartItemId); // pakai find() dan load relasi menu
         $cart->update([
             'keterangan' => $this->catatan,
         ]);

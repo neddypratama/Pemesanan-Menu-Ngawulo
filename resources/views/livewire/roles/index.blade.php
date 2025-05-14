@@ -48,6 +48,7 @@ new class extends Component {
     public function delete($id): void
     {
         $kategori = Role::findOrFail($id);
+        logActivity('deleted', 'Menghapus data role ' . $kategori->name);
         $kategori->delete();
         $this->warning("Role $kategori->name akan dihapus", position: 'toast-top');
     }
@@ -65,6 +66,7 @@ new class extends Component {
         ]);
 
         Role::create(['name' => $this->newRoleName]);
+        logActivity('created', $this->newRoleName . ' ditambahkan');
 
         $this->createModal = false;
         $this->success('Role created successfully.', position: 'toast-top');
@@ -84,6 +86,7 @@ new class extends Component {
     {
         if ($this->editingRole) {
             $this->editingRole->update(['name' => $this->editingName, 'updated_at' => now()]);
+            logActivity('updated', 'Merubah data role ' . $this->editingRole);
             $this->editModal = false;
             $this->success('Role updated successfully.', position: 'toast-top');
         }
@@ -146,7 +149,7 @@ new class extends Component {
     </x-header>
 
     <!-- FILTERS -->
-    <div class="grid grid-cols-1 md:grid-cols-8 gap-4  items-end mb-4">
+    <div class="grid grid-cols-1 md:grid-cols-8 gap-4 items-end mb-4">
         <div class="md:col-span-1">
             <x-select label="Show entries" :options="$pages" wire:model.live="perPage" class="w-15" />
         </div>
@@ -156,7 +159,7 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" />
+                class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>

@@ -1,12 +1,15 @@
 <?php
 
 use App\Models\Transaksi;
+use App\Models\Order;
 use App\Models\User;
 use Livewire\Volt\Component;
 use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\TransaksiExport;
 
 new class extends Component {
     use Toast;
@@ -27,6 +30,11 @@ new class extends Component {
 
     public int $perPage = 10; // Default jumlah data per halaman
 
+    public bool $showExportModal = false;
+    public string $exportMode = 'all'; // 'all', 'range', 'month'
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+
     // Clear filters
     public function clear(): void
     {
@@ -39,14 +47,35 @@ new class extends Component {
     public function delete($id): void
     {
         $transaksi = Transaksi::findOrFail($id);
+        $order = Order::where('transaksi_id', $id)->get();
+        logActivity('deleted', 'Menghapus data transaksi ' . $transaksi->invoice);
+        logActivity('deleted', 'Menghapus data order ' . $order->id);
         $transaksi->delete();
+        $order->delete();
         $this->warning("Transaksi $transaksi->invoice akan dihapus", position: 'toast-top');
     }
 
     // Table headers
     public function headers(): array
     {
-        return [['key' => 'invoice', 'label' => 'INV', 'class' => 'w-40'], ['key' => 'user_name', 'label' => 'User', 'class' => 'w-50'], ['key' => 'total', 'label' => 'Total', 'format' => ['currency', '2,.', 'Rp. ']], ['key' => 'status', 'label' => 'Status'], ['key' => 'tanggal', 'label' => 'Tanggal', 'class' => 'w-64', 'format' => ['date', 'H:i:s d/m/Y']]];
+        return [['key' => 'invoice', 'label' => 'INV', 'class' => 'w-40'], ['key' => 'user_name', 'label' => 'User', 'class' => 'w-50'], ['key' => 'total', 'label' => 'Total', 'format' => ['currency', '2,.', 'Rp. ']], ['key' => 'status', 'label' => 'Status'], ['key' => 'tanggal', 'label' => 'Tanggal', 'class' => 'w-20', 'format' => ['date', 'H:i:s d/m/Y']]];
+    }
+
+    public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $query = Transaksi::with('user', 'orders.menu');
+
+        if ($this->exportMode === 'range' && $this->startDate && $this->endDate) {
+            $query->whereBetween('tanggal', [$this->startDate, $this->endDate]);
+        } elseif ($this->exportMode === 'month') {
+            $query->whereMonth('tanggal', now()->month)->whereYear('tanggal', now()->year);
+        }
+
+        $data = $query->get();
+        $this->showExportModal = false;
+        logActivity('export', 'Mencetak data transaksi');
+
+        return Excel::download(new TransaksiExport($data), 'transaksi.xlsx');
     }
 
     public function transaksis(): LengthAwarePaginator
@@ -105,6 +134,8 @@ new class extends Component {
     <x-header title="Transactions" separator progress-indicator>
         <x-slot:actions>
             <x-button label="Create" link="/orders/create" responsive icon="o-plus" class="btn-primary" />
+            <x-button label="Export" wire:click="$set('showExportModal', true)" icon="o-arrow-down-tray"
+                class="btn-secondary" responsive />
         </x-slot:actions>
     </x-header>
 
@@ -119,7 +150,7 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" />
+                class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>
@@ -167,4 +198,24 @@ new class extends Component {
             <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
+
+    <x-modal wire:model="showExportModal" title="Export Transaksi">
+        <div class="grid gap-4">
+            <x-select label="Mode Export" wire:model.live="exportMode" :options="[
+                ['id' => 'all', 'name' => 'Semua Data'],
+                ['id' => 'range', 'name' => 'Berdasarkan Tanggal'],
+                ['id' => 'month', 'name' => 'Bulan Ini'],
+            ]" />
+
+            @if ($exportMode === 'range')
+                <x-input type="date" label="Dari Tanggal" wire:model.live="startDate" />
+                <x-input type="date" label="Sampai Tanggal" wire:model.live="endDate" />
+            @endif
+        </div>
+
+        <x-slot:actions>
+            <x-button label="Batal" @click="$set('showExportModal', false)" />
+            <x-button label="Export" wire:click="export" spinner class="btn-primary" />
+        </x-slot:actions>
+    </x-modal>
 </div>

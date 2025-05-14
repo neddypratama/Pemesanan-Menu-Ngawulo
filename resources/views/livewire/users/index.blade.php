@@ -42,6 +42,7 @@ new class extends Component {
         if ($user->avatar && file_exists(public_path($user->avatar))) {
             unlink(public_path($user->avatar));
         }
+        logActivity('deleted', 'Menghapus data user ' . $user->name);
         $user->delete();
         $this->warning("User $user->name akan dihapus", position: 'toast-top');
     }
@@ -119,7 +120,7 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" />
+                class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>

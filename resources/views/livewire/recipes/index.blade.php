@@ -58,6 +58,7 @@ new class extends Component {
     public function delete($id): void
     {
         $resep = Resep::findOrFail($id);
+        logActivity('deleted', 'Menghapus role ' . $resep->id);
         $resep->delete();
         $this->warning("Resep $resep->name akan dihapus", position: 'toast-top');
     }
@@ -94,7 +95,8 @@ new class extends Component {
             'newResepMenu' => 'sometimes',
         ]);
 
-        Resep::create(['resep' => $this->newResepName, 'menu_id' => $this->newResepMenu]);
+        $resep = Resep::create(['resep' => $this->newResepName, 'menu_id' => $this->newResepMenu]);
+        logActivity('created', $resep->id . ' ditambahkan');
 
         $this->createModal = false;
         $this->success('Resep created successfully.', position: 'toast-top');
@@ -125,6 +127,7 @@ new class extends Component {
                 'menu_id' => $this->editingMenu,
             ]);
 
+            logActivity('updated', 'Merubah data resep ' . $this->editingResep->id);
             $this->editModal = false;
             $this->success('Resep updated successfully.', position: 'toast-top');
         }
@@ -138,7 +141,18 @@ new class extends Component {
 
     public function resep(): LengthAwarePaginator
     {
-        $data = Resep::query()->withAggregate('menu', 'name')->when($this->menu_id, fn(Builder $q) => $q->where('menu_id', $this->menu_id))->orderBy(...array_values($this->sortBy))->paginate($this->perPage);
+        $data = Resep::query()
+            ->withAggregate('menu', 'name')
+            ->when($this->search, function (Builder $q) {
+                $q->whereHas('menu', function (Builder $query) {
+                    $query->where('name', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->menu_id, function (Builder $q) {
+                $q->where('menu_id', $this->menu_id);
+            })
+            ->orderBy(...array_values($this->sortBy))
+            ->paginate($this->perPage);
 
         // dd($data);
         return $data;
@@ -191,8 +205,8 @@ new class extends Component {
             <x-select label="Show entries" :options="$pages" wire:model.live="perPage" />
         </div>
         <div class="md:col-span-6">
-            {{-- <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass"
-                class="" /> --}}
+            <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass"
+                class="" />
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"

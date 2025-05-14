@@ -67,6 +67,8 @@ new class extends Component {
             $this->menu->update(['photo' => "/storage/$url"]);
         }
 
+        logActivity('updated', 'Merubah data menu ' . $this->menu->name);
+
         // You can toast and redirect to any route
         $this->success('Menu updated with success.', redirectTo: '/menus');
     }

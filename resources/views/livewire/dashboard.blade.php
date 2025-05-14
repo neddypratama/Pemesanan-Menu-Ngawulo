@@ -252,8 +252,8 @@ new class extends Component {
         </x-card>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <x-card class="grid col-span-2">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+        <x-card class="grid col-span-4">
             <x-slot:title>Gross</x-slot:title>
             <x-chart wire:model="myChart" />
         </x-card>

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\RatingExport;
 
 new class extends Component {
     use Toast, WithPagination, WithFileUploads;
@@ -60,6 +62,7 @@ new class extends Component {
     public function delete($id): void
     {
         $rating = Rating::findOrFail($id);
+        logActivity('deleted', 'Menghapus rating' . $rating->id);
         $rating->delete();
         $this->warning("Rating $rating->id akan dihapus", position: 'toast-top');
     }
@@ -80,7 +83,8 @@ new class extends Component {
             'newRating' => 'required',
         ]);
 
-        Rating::create(['menu_id' => $this->newMenu, 'rating' => $this->newRating, 'review' => $this->newReview]);
+        $rating = Rating::create(['menu_id' => $this->newMenu, 'rating' => $this->newRating, 'review' => $this->newReview]);
+        logActivity('created', $rating->id . ' ditambahkan');
 
         $this->createModal = false;
         $this->success('Rating created successfully.', position: 'toast-top');
@@ -125,6 +129,8 @@ new class extends Component {
                 'review' => $this->editingReview,
                 'menu_id' => $this->editingMenu,
             ]);
+
+            logActivity('updated', 'Merubah data rating ' . $this->editingRating->id);
 
             $this->editModal = false;
             $this->success('Rating updated successfully.', position: 'toast-top');
@@ -176,6 +182,12 @@ new class extends Component {
             $this->resetPage();
         }
     }
+
+    public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        logActivity('export', 'Mencetak data rating');
+        return Excel::download(new RatingExport(), 'ratings.xlsx');
+    }
 };
 
 ?>
@@ -185,6 +197,7 @@ new class extends Component {
     <x-header title="Ratings" separator progress-indicator>
         <x-slot:actions>
             <x-button label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
+            <x-button label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
         </x-slot:actions>
     </x-header>
 
@@ -198,8 +211,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" responsive />
+            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>

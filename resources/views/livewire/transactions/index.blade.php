@@ -147,8 +147,7 @@ new class extends Component {
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$transaksi" :sort-by="$sortBy" with-pagination
-            link="orders/{id}/detail?invoice={invoice}&user={user.name}" show-empty-text empty-text="Data tidak ada!">
+        <x-table :headers="$headers" :rows="$transaksi" :sort-by="$sortBy" with-pagination show-empty-text empty-text="Data tidak ada!">
 
             @scope('cell_status', $transaksi)
                 @php

@@ -54,6 +54,8 @@ new class extends Component {
 
         // Create
         $menu = Menu::create($data);
+        
+        logActivity('created', $menu->name . ' ditambahkan');
 
         // You can toast and redirect to any route
         $this->success('Menu berhasil dibuat!', redirectTo: '/menus');

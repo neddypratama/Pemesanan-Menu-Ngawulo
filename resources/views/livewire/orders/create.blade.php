@@ -93,15 +93,19 @@ new class extends Component {
             'updated_at' => now(),
         ]);
 
+        logActivity('created', $transaksi->invoice . ' ditambahkan');
+
         foreach ($this->orders as $order) {
-            Order::create([
+            $order = Order::create([
                 'transaksi_id' => $transaksi->id,
                 'menu_id' => $order['menu_id'],
                 'qty' => $order['qty'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            logActivity('created', $order->id . ' ditambahkan');
         }
+
 
         $this->success('Transaksi dan Order berhasil dibuat!', redirectTo: '/orders');
     }
