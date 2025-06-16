@@ -88,10 +88,10 @@ new class extends Component {
                 </div>
                 <div class="flex items-center text-xs">
                     <button wire:click.stop="decrementQty({{ $item['id'] }})"
-                        class="bg-gray-200 px-2 py-0.5 rounded">−</button>
+                        class=" px-2 py-0.5 rounded">−</button>
                     <span class="text-sm font-semibold mx-2">{{ $item['qty'] }}</span>
                     <button wire:click.stop="incrementQty({{ $item['id'] }})"
-                        class="bg-gray-200 px-2 py-0.5 rounded">+</button>
+                        class=" px-2 py-0.5 rounded">+</button>
                 </div>
                 <button wire:click="deleteCartItem({{ $item['id'] }})" class="text-pink-500 hover:text-pink-700"
                     title="Hapus item">
