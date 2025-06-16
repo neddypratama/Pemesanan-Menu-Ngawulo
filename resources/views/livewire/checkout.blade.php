@@ -29,26 +29,22 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
         $this->orders = $this->transaksi->orders->toArray();
 
-        if ($this->transaksi->token && $this->transaksi->midtrans_id) {
+        if ($this->transaksi->snap_token && $this->transaksi->midtrans_id) {
             try {
                 $this->configureMidtrans();
                 $status = Transaction::status($this->transaksi->midtrans_id);
 
                 if (in_array($status->transaction_status, ['pending', 'capture', 'authorize'])) {
-                    $this->snapToken = $this->transaksi->token;
-                    $this->payNow($this->snapToken);
+                    $this->snapToken = $this->transaksi->snap_token;
                 } elseif (in_array($status->transaction_status, ['expire', 'cancel', 'deny'])) {
-                    if ($status->transaction_status === 'cancel') {
-                        $this->transaksi->update(['status' => 'cancel']);
-                        logActivity('cancel', 'Merubah status cancel transaksi ' . $this->transaksi->invoice);
-                    } else {
-                        $this->transaksi->update(['status' => 'error']);
-                        logActivity('error', 'Merubah status error transaksi ' . $this->transaksi->invoice);
-                    }
+                    $this->transaksi->update([
+                        'status' => $status->transaction_status === 'cancel' ? 'cancel' : 'error',
+                    ]);
+                    logActivity($status->transaction_status, "Status transaksi {$this->transaksi->invoice} diubah karena Midtrans: $status->transaction_status");
                     $this->generateSnapToken(true);
                 } elseif ($status->transaction_status === 'settlement') {
                     $this->transaksi->update(['status' => 'success']);
-                    logActivity('success', 'Merubah status success transaksi ' . $this->transaksi->invoice);
+                    logActivity('success', "Status transaksi {$this->transaksi->invoice} berhasil dibayar");
                     return redirect()->route('orders.show', $this->transaksi->id)->with('status', 'Pembayaran telah dilakukan.');
                 }
             } catch (\Exception $e) {
@@ -63,20 +59,20 @@ new #[Layout('components.layouts.buy')] class extends Component {
     {
         Config::$serverKey = config('midtrans.server_key');
         Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = config('midtrans.is_sanitized');
-        Config::$is3ds = config('midtrans.is_3ds');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
     }
 
-    public function generateSnapToken($forceNewOrderId = false)
+    public function generateSnapToken($forceNew = false)
     {
         $this->configureMidtrans();
 
-        $orderId = $forceNewOrderId ? 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(4) : ($this->transaksi->midtrans_id ?: 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(4));
+        $orderId = $forceNew ? 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(5) : ($this->transaksi->midtrans_id ?: 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(5));
 
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
-                'gross_amount' => $this->transaksi->total,
+                'gross_amount' => (int) $this->transaksi->total,
             ],
             'customer_details' => [
                 'first_name' => $this->transaksi->user->name,
@@ -92,20 +88,13 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 'midtrans_id' => $orderId,
                 'status' => 'pending',
             ]);
-            logActivity('update', 'Menambah token dan midtrans id transaksi ' . $this->transaksi->invoice);
-            logActivity('pending', 'Merubah status pending transaksi ' . $this->transaksi->invoice);
+
+            logActivity('pending', "Token Snap dan Midtrans ID disimpan untuk {$this->transaksi->invoice}");
 
             $this->snapToken = $snapToken;
         } catch (\Exception $e) {
             $this->generateSnapToken(true);
         }
-    }
-
-    public function openCatatanModal($cartItemId)
-    {
-        $this->selectedCartItemId = $cartItemId;
-        $this->catatan = Order::find($cartItemId)?->keterangan ?? '';
-        $this->showCatatanModal = true;
     }
 
     public function getTotalProperty()
@@ -120,19 +109,15 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
         if ($orderId && $status) {
             $transaksi = Transaksi::where('midtrans_id', $orderId)->first();
-
             if ($transaksi) {
-                if ($status == 'settlement') {
+                if ($status === 'settlement') {
                     $transaksi->update(['status' => 'success']);
-                    logActivity('success', 'Merubah status success transaksi ' . $transaksi->invoice);
-                } elseif ($status == 'deny' || $status == 'expire') {
+                } elseif ($status === 'deny' || $status === 'expire') {
                     $transaksi->update(['status' => 'error']);
-                    logActivity('error', 'Merubah status error transaksi ' . $transaksi->invoice);
-                } elseif ($status == 'cancel') {
+                } elseif ($status === 'cancel') {
                     $transaksi->update(['status' => 'cancel']);
-                    logActivity('cancel', 'Merubah status cancel transaksi ' . $transaksi->invoice);
                 }
-
+                logActivity($status, "Transaksi {$transaksi->invoice} berubah menjadi $status");
                 $this->transaksi = $transaksi;
             }
         }
@@ -140,10 +125,11 @@ new #[Layout('components.layouts.buy')] class extends Component {
         return redirect()->route('orders.show', $this->transaksi->id);
     }
 
-    public function payNow($token)
+    public function openCatatanModal($cartItemId)
     {
-        echo "<script src='https://app.sandbox.midtrans.com/snap/snap.js' data-client-key='" . config('midtrans.client_key') . "'></script>";
-        echo "<script> window.snap.pay('$token'); </script>";
+        $this->selectedCartItemId = $cartItemId;
+        $this->catatan = Order::find($cartItemId)?->keterangan ?? '';
+        $this->showCatatanModal = true;
     }
 };
 ?>
@@ -181,8 +167,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
                             <img src="{{ $order['menu']['photo'] }}" class="w-12 h-12 rounded" />
                             <div>
                                 <p class="font-semibold ml-5">{{ $order['menu']['name'] }}</p>
-                                <p class="text-sm ml-5 font-thin">Rp.
-                                    {{ number_format($order['menu']['price'], 0, ',', '.') }}</p>
+                                <p class="text-sm ml-5 font-thin">Rp. {{ number_format($order['menu']['price'], 0, ',', '.') }}</p>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -222,8 +207,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
     </div>
 </div>
 
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}">
-</script>
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
     function payNow(token) {
         window.snap.pay(token, {

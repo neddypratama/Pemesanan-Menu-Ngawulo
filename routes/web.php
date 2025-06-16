@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
+Route::view('/bayar', 'bayar');
+
+
 // ======================
 // 👤 GUEST ROUTES
 // ======================

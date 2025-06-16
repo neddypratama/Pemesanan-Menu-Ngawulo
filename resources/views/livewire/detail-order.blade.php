@@ -177,7 +177,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     description="Kami telah menerima pesanan, menunggu konfirmasi pembayaran" :pending="false" />
 
                 @if ($isCancelled)
-                    <x-timeline-item title="Pesanan Dibatalkan" icon="o-x-circle" :pending="false">
+                    <x-timeline-item title="Pesanan Dibatalkan" icon="o-x-circle" :pending="false" last>
                         <x-slot name="subtitle">
                             {{ $cancelTime }}
                         </x-slot>
@@ -185,59 +185,59 @@ new #[Layout('components.layouts.buy')] class extends Component {
                             Pesanan telah dibatalkan oleh sistem atau pengguna.
                         </x-slot>
                     </x-timeline-item>
+                @else
+                    <x-timeline-item title="Pembayaran telah dikonfirmasi" icon="o-credit-card" :pending="!$isPaid" >
+                        <x-slot name="subtitle">
+                            @if ($status === 'pending')
+                                <a href="{{ url('/checkout/' . $transaksi->invoice) }}"
+                                    class="text-blue-600 underline font-semibold">
+                                    Lanjutkan ke Pembayaran
+                                </a>
+                            @else
+                                {{ $successTime }}
+                            @endif
+                        </x-slot>
+                        <x-slot name="description">
+                            Pembayaran telah dikonfirmasi, siap dibuat.
+                        </x-slot>
+                    </x-timeline-item>
+
+                    <x-timeline-item title="Pesanan selesai dibuat" icon="o-truck" :pending="!$isDelivered">
+                        <x-slot name="subtitle">
+                            {{ $isDelivered ? $deliverTime : '' }}
+                        </x-slot>
+                        <x-slot name="description">
+                            Pesanan sedang diantar.
+                            @if ($status === 'deliver')
+                                <div class="mt-4">
+                                    <x-button label="Tandai Selesai" icon="o-check-circle" wire:click="markAsDone"
+                                        class="btn-success" />
+                                </div>
+                            @endif
+                        </x-slot>
+                    </x-timeline-item>
+
+                    <x-timeline-item title="Pesanan selesai" icon="o-check-badge" :pending="!$isDone" last>
+                        <x-slot name="subtitle">
+                            @if ($isDone)
+                                {{ $doneTime }}
+                            @endif
+                        </x-slot>
+                        <x-slot name="description">
+                            Pesanan telah selesai diterima pelanggan.
+                            @if ($isDone)
+                                @foreach ($transaksi->orders as $item)
+                                    @if (!$item->rating == 1)
+                                        <div class="flex flex-col w-32">
+                                            <x-button spinner class="" label="Ratings" @click="$wire.create()"
+                                                icon="o-plus" />
+                                        </div>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </x-slot>
+                    </x-timeline-item>
                 @endif
-
-                <x-timeline-item title="Pembayaran telah dikonfirmasi" icon="o-credit-card" :pending="!$isPaid">
-                    <x-slot name="subtitle">
-                        @if ($status === 'pending')
-                            <a href="{{ url('/checkout/' . $transaksi->invoice) }}"
-                                class="text-blue-600 underline font-semibold">
-                                Lanjutkan ke Pembayaran
-                            </a>
-                        @else
-                            {{ $successTime }}
-                        @endif
-                    </x-slot>
-                    <x-slot name="description">
-                        Pembayaran telah dikonfirmasi, siap dibuat.
-                    </x-slot>
-                </x-timeline-item>
-
-                <x-timeline-item title="Pesanan selesai dibuat" icon="o-truck" :pending="!$isDelivered">
-                    <x-slot name="subtitle">
-                        {{ $isDelivered ? $deliverTime : '' }}
-                    </x-slot>
-                    <x-slot name="description">
-                        Pesanan sedang diantar.
-                        @if ($status === 'deliver')
-                            <div class="mt-4">
-                                <x-button label="Tandai Selesai" icon="o-check-circle" wire:click="markAsDone"
-                                    class="btn-success" />
-                            </div>
-                        @endif
-                    </x-slot>
-                </x-timeline-item>
-
-                <x-timeline-item title="Pesanan selesai" icon="o-check-badge" :pending="!$isDone" last>
-                    <x-slot name="subtitle">
-                        @if ($isDone)
-                            {{ $doneTime }}
-                        @endif
-                    </x-slot>
-                    <x-slot name="description">
-                        Pesanan telah selesai diterima pelanggan.
-                        @if ($isDone)
-                            @foreach ($transaksi->orders as $item)
-                                @if (!$item->rating == 1)
-                                    <div class="flex flex-col w-32">
-                                        <x-button spinner class="" label="Ratings" @click="$wire.create()"
-                                            icon="o-plus" />
-                                    </div>
-                                @endif
-                            @endforeach
-                        @endif
-                    </x-slot>
-                </x-timeline-item>
             </div>
         </x-card>
     </div>
