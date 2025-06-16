@@ -11,7 +11,6 @@ class Kategori extends Model
     use HasFactory;
 
     protected $fillable = [
-        'image',
         'name',
         'created_at',
         'updated_at',

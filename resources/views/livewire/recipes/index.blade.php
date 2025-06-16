@@ -160,12 +160,13 @@ new class extends Component {
 
     public function with(): array
     {
-        if ($this->filter >= 0 && $this->filter < 1) {
+        if ($this->filter >= 0 && $this->filter < 2) {
             if (!$this->search == null) {
                 $this->filter = 1;
             } else {
                 $this->filter = 0;
             }
+
             if (!$this->menu_id == 0) {
                 $this->filter += 1;
             }
@@ -192,10 +193,10 @@ new class extends Component {
 
 <div>
     <!-- HEADER -->
-    <dd>{{ $this->detailModal }}</dd>
+    {{-- <dd>{{ $this->detailModal }}</dd> --}}
     <x-header title="Recipes" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
+            <x-button spinner label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
         </x-slot:actions>
     </x-header>
 
@@ -209,7 +210,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
                 class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
@@ -217,14 +218,12 @@ new class extends Component {
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$resep" :sort-by="$sortBy" with-pagination>
+        <x-table :headers="$headers" :rows="$resep" :sort-by="$sortBy" with-pagination  @row-click="$wire.edit($event.detail.id)">
             @scope('actions', $resep)
                 <div class="flex">
-                    <x-button tooltip="Resep" icon="fas.circle-info" class="btn-ghost btn-sm text-slate-500"
-                        wire:click="detail({{ $resep['id'] }})" />
-                    <x-button tooltip="Edit" icon="fas.pencil" class="btn-ghost btn-sm text-warning"
-                        wire:click="edit({{ $resep['id'] }})" />
-                    <x-button icon="o-trash" wire:click="delete({{ $resep['id'] }})"
+                    <x-button spinner tooltip="Resep" icon="fas.circle-info" class="btn-ghost btn-sm text-slate-500"
+                        wire:click.stop="detail({{ $resep['id'] }})" />
+                    <x-button spinner icon="o-trash" wire:click.stop="delete({{ $resep['id'] }})"
                         wire:confirm="Yakin ingin menghapus {{ $resep['name'] }}?" spinner
                         class="btn-ghost btn-sm text-red-500" />
                 </div>
@@ -239,8 +238,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
         </x-slot:actions>
     </x-modal>
 
@@ -251,8 +250,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
         </x-slot:actions>
     </x-modal>
 
@@ -263,21 +262,21 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" wire:click="closeDetail" />
+            <x-button spinner label="Cancel" icon="o-x-mark" wire:click="closeDetail" />
         </x-slot:actions>
     </x-modal>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
-            {{-- <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" /> --}}
+            <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="Menu" wire:model.live="menu_id" :options="$menus" icon="o-flag"
                 placeholder-value="0" />
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

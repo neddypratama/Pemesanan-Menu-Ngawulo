@@ -29,7 +29,7 @@ new class extends Component {
             $cart->save();
             $this->loadCart();
             $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
-            logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name .' di cart' );
+            logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name . ' di cart');
         }
     }
 
@@ -41,14 +41,14 @@ new class extends Component {
             $cart->save();
             $this->loadCart();
             $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
-            logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name .' di cart' );
+            logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name . ' di cart');
         }
     }
 
     public function deleteCartItem($id): void
     {
-        $cart = Cart::where('id', $id)->where('user_id', Auth::id());
-        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart' );
+        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->first();
+        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
         $cart->delete();
         $this->loadCart();
         $this->error('Dihapus dari keranjang!', position: 'toast-buttom');
@@ -56,11 +56,15 @@ new class extends Component {
 
     public function clearCart(): void
     {
-        $cart = Cart::where('user_id', Auth::id());
-        logActivity('delete', 'Menghapus cart oleh user ' . Auth::name() );
-        $cart->delete();
+        $carts = Cart::where('user_id', Auth::id())->get();
+
+        foreach ($carts as $cart) {
+            logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
+            $cart->delete();
+        }
+
         $this->loadCart();
-        $this->error('Keranjang dihapus!', position: 'toast-buttom');
+        $this->error('Keranjang dihapus!', position: 'toast-bottom');
     }
 
     protected $listeners = ['cartUpdated' => 'loadCart'];
@@ -115,7 +119,8 @@ new class extends Component {
                     Trash cart
                 </button>
 
-                <x-button link="/cart" class="btn-primary ml-auto flex items-center gap-2" size="sm" icon="fas.arrow-right">
+                <x-button link="/cart" class="btn-primary ml-auto flex items-center gap-2" size="sm"
+                    icon="fas.arrow-right">
                     Go to cart
                 </x-button>
             </div>

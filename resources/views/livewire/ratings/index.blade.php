@@ -196,8 +196,8 @@ new class extends Component {
     <!-- HEADER -->
     <x-header title="Ratings" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
-            <x-button label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
+            <x-button spinner label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
+            <x-button spinner label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
         </x-slot:actions>
     </x-header>
 
@@ -211,14 +211,14 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}" responsive />
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$rating" :sort-by="$sortBy" with-pagination>
+        <x-table :headers="$headers" :rows="$rating" :sort-by="$sortBy" with-pagination @row-click="$wire.edit($event.detail.id)">
             @scope('cell_rating', $rating)
                 <div class="flex text-yellow-500">
                     @for ($i = 1; $i <= 5; $i++)
@@ -233,11 +233,9 @@ new class extends Component {
 
             @scope('actions', $rating)
                 <div class="flex">
-                    <x-button tooltip="Review" icon="fas.circle-info" class="btn-ghost btn-sm text-slate-500"
-                        wire:click="detail({{ $rating['id'] }})" />
-                    <x-button tooltip="Edit" icon="fas.pencil" class="btn-ghost btn-sm text-warning"
-                        wire:click="edit({{ $rating['id'] }})" />
-                    <x-button icon="o-trash" wire:click="delete({{ $rating['id'] }})"
+                    <x-button spinner tooltip="Review" icon="fas.circle-info" class="btn-ghost btn-sm text-slate-500"
+                        wire:click.stop="detail({{ $rating['id'] }})" />
+                    <x-button spinner icon="o-trash" wire:click.stop="delete({{ $rating['id'] }})"
                         wire:confirm="Yakin ingin menghapus {{ $rating['name'] }}?" spinner
                         class="btn-ghost btn-sm text-red-500" />
                 @endscope
@@ -248,12 +246,12 @@ new class extends Component {
         <div class="grid gap-4">
             <x-select label="Menu" wire:model.live="newMenu" :options="$menus" placeholder="---" />
             <x-rating label="Rating" wire:model.live="newRating" class="bg-warning" total="5" />
-            <x-editor wire:model.live="newReview" label="Review" hint="The great review" />
+            <x-textarea wire:model.live="newReview" label="Review" hint="The great review" />
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
         </x-slot:actions>
     </x-modal>
 
@@ -261,12 +259,12 @@ new class extends Component {
         <div class="grid gap-4">
             <x-select label="Menu" wire:model.live="editingMenu" :options="$menus" placeholder="---" />
             <x-rating label="Rating" wire:model.live="editingRate" class="bg-warning" total="5" />
-            <x-editor wire:model.live="editingReview" label="Review" hint="The great review" />
+            <x-textarea wire:model.live="editingReview" label="Review" hint="The great review" />
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
         </x-slot:actions>
     </x-modal>
 
@@ -274,16 +272,16 @@ new class extends Component {
         <div class="grid gap-4">
             <x-input label="Menu" wire:model.live="detailMenu" readonly />
             <x-rating label="Rating" wire:model.live="detailRate" class="bg-warning" total="5" disabled />
-            <x-editor wire:model.live="detailReview" label="Review" hint="The great review" readonly />
+            <x-textarea wire:model.live="detailReview" label="Review" hint="The great review" readonly />
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.detailModal=false" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.detailModal=false" />
         </x-slot:actions>
     </x-modal>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="Menu" wire:model.live="menu_id" :options="$menus" icon="o-flag"
@@ -291,8 +289,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

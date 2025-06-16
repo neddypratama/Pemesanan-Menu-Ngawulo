@@ -47,12 +47,22 @@ new class extends Component {
     public function delete($id): void
     {
         $transaksi = Transaksi::findOrFail($id);
-        $order = Order::where('transaksi_id', $id)->get();
+        $orders = Order::where('transaksi_id', $id)->get();
+
         logActivity('deleted', 'Menghapus data transaksi ' . $transaksi->invoice);
-        logActivity('deleted', 'Menghapus data order ' . $order->id);
+
+        // Log semua ID order yang dihapus (jika ingin dicatat)
+        foreach ($orders as $order) {
+            logActivity('deleted', 'Menghapus data order ID: ' . $order->id);
+        }
+
+        // Hapus semua orders
+        Order::where('transaksi_id', $id)->delete();
+
+        // Hapus transaksi
         $transaksi->delete();
-        $order->delete();
-        $this->warning("Transaksi $transaksi->invoice akan dihapus", position: 'toast-top');
+
+        $this->warning("Transaksi $transaksi->invoice telah dihapus", position: 'toast-top');
     }
 
     // Table headers
@@ -133,8 +143,8 @@ new class extends Component {
     <!-- HEADER -->
     <x-header title="Transactions" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" link="/orders/create" responsive icon="o-plus" class="btn-primary" />
-            <x-button label="Export" wire:click="$set('showExportModal', true)" icon="o-arrow-down-tray"
+            <x-button spinner label="Create" link="/orders/create" responsive icon="o-plus" class="btn-primary" />
+            <x-button spinner label="Export" wire:click="$set('showExportModal', true)" icon="o-arrow-down-tray"
                 class="btn-secondary" responsive />
         </x-slot:actions>
     </x-header>
@@ -149,7 +159,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
                 class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
@@ -175,9 +185,9 @@ new class extends Component {
             @endscope
             @scope('actions', $transaksi)
                 <div class="flex">
-                    <x-button tooltip="Edit" icon="fas.pencil" class="btn-ghost btn-sm text-warning"
+                    <x-button spinner tooltip="Edit" icon="fas.pencil" class="btn-ghost btn-sm text-warning"
                         link="{{ route('orders.edit', ['id' => $transaksi['id']]) }}" />
-                    <x-button tooltip="Delete" icon="o-trash" wire:click="delete({{ $transaksi['id'] }})"
+                    <x-button spinner tooltip="Delete" icon="o-trash" wire:click="delete({{ $transaksi['id'] }})"
                         wire:confirm="Yakin ingin menghapus {{ $transaksi['invoice'] }}?" spinner
                         class="btn-ghost btn-sm text-red-500" />
                 </div>
@@ -186,7 +196,7 @@ new class extends Component {
     </x-card>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="User" wire:model.live="user_id" :options="$users" icon="o-flag"
@@ -194,8 +204,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 
@@ -214,8 +224,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Batal" @click="$set('showExportModal', false)" />
-            <x-button label="Export" wire:click="export" spinner class="btn-primary" />
+            <x-button spinner label="Batal" @click="$set('showExportModal', false)" />
+            <x-button spinner label="Export" wire:click="export" spinner class="btn-primary" />
         </x-slot:actions>
     </x-modal>
 </div>

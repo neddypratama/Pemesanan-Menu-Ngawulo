@@ -108,7 +108,7 @@ new class extends Component {
     <x-header title="Customers" separator progress-indicator>
         <x-slot:actions>
             {{-- <x-button label="Create" link="/users/create" responsive icon="o-plus" class="btn-primary" /> --}}
-            <x-button label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
+            <x-button spinner label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
         </x-slot:actions>
     </x-header>
 

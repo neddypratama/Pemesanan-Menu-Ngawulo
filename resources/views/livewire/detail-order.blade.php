@@ -44,7 +44,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
             $rating = $this->newRating[$menuId] ?? 0;
             $review = $this->newReview[$menuId] ?? '';
 
-            Rating::create([
+            $rating = Rating::create([
                 'menu_id' => $menuId,
                 'rating' => $rating,
                 'review' => $review,
@@ -60,8 +60,25 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->transaksi->refresh();
         $this->transaksi->load('orders.menu');
 
+        logActivity('created', $rating->id . ' ditambahkan');
+
         $this->createModal = false;
         session()->flash('status', 'Rating berhasil ditambahkan!');
+    }
+
+    public function markAsDone(): void
+    {
+        $this->transaksi->update([
+            'status' => 'done',
+            'updated_at' => now(),
+        ]);
+
+        logActivity('done', 'Merubah status done transaksi ' . $this->transaksi->invoice);
+
+        $this->transaksi->refresh();
+        $this->transaksi->load('orders.menu');
+
+        session()->flash('status', 'Pesanan berhasil ditandai sebagai selesai.');
     }
 };
 ?>
@@ -122,7 +139,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
     {{-- Status --}}
     @php
-        // Ambil semua log dengan action 'pending' dan yang description-nya mengandung kode invoice
+
         $successLogs = ActivityLog::where('action', 'success')
             ->where('description', 'like', '%' . $transaksi->invoice . '%')
             ->first();
@@ -138,14 +155,19 @@ new #[Layout('components.layouts.buy')] class extends Component {
             ->first();
         $doneTime = $doneLogs?->created_at->format('Y-m-d H:i:s');
 
+        $cancelLogs = ActivityLog::where('action', 'cancel')
+            ->where('description', 'like', '%' . $transaksi->invoice . '%')
+            ->first();
+        $cancelTime = $cancelLogs?->created_at->format('Y-m-d H:i:s');
+
         $status = $transaksi->status;
         $created = $transaksi->created_at->format('Y-m-d H:i:s');
 
         $isPaid = in_array($status, ['success', 'deliver', 'done']);
         $isDelivered = in_array($status, ['deliver', 'done']);
         $isDone = $status === 'done';
+        $isCancelled = $status === 'cancel';
     @endphp
-
 
     <div class="lg:col-span-4 space-y-4">
         <x-card class="rounded-xl border border-base-300 shadow-sm" title="Status">
@@ -153,6 +175,17 @@ new #[Layout('components.layouts.buy')] class extends Component {
             <div class="px-4">
                 <x-timeline-item title="Pesanan telah dilakukan" icon="o-map-pin" first subtitle="{{ $created }}"
                     description="Kami telah menerima pesanan, menunggu konfirmasi pembayaran" :pending="false" />
+
+                @if ($isCancelled)
+                    <x-timeline-item title="Pesanan Dibatalkan" icon="o-x-circle" :pending="false">
+                        <x-slot name="subtitle">
+                            {{ $cancelTime }}
+                        </x-slot>
+                        <x-slot name="description">
+                            Pesanan telah dibatalkan oleh sistem atau pengguna.
+                        </x-slot>
+                    </x-timeline-item>
+                @endif
 
                 <x-timeline-item title="Pembayaran telah dikonfirmasi" icon="o-credit-card" :pending="!$isPaid">
                     <x-slot name="subtitle">
@@ -170,9 +203,20 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     </x-slot>
                 </x-timeline-item>
 
-                <x-timeline-item title="Pesanan selesai dibuat" icon="o-truck"
-                    subtitle="{{ $isDelivered ? $deliverTime : '' }}" description="Pesanan sedang diantar."
-                    :pending="!$isDelivered" />
+                <x-timeline-item title="Pesanan selesai dibuat" icon="o-truck" :pending="!$isDelivered">
+                    <x-slot name="subtitle">
+                        {{ $isDelivered ? $deliverTime : '' }}
+                    </x-slot>
+                    <x-slot name="description">
+                        Pesanan sedang diantar.
+                        @if ($status === 'deliver')
+                            <div class="mt-4">
+                                <x-button label="Tandai Selesai" icon="o-check-circle" wire:click="markAsDone"
+                                    class="btn-success" />
+                            </div>
+                        @endif
+                    </x-slot>
+                </x-timeline-item>
 
                 <x-timeline-item title="Pesanan selesai" icon="o-check-badge" :pending="!$isDone" last>
                     <x-slot name="subtitle">
@@ -186,7 +230,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
                             @foreach ($transaksi->orders as $item)
                                 @if (!$item->rating == 1)
                                     <div class="flex flex-col w-32">
-                                        <x-button class="" label="Ratings" @click="$wire.create()"
+                                        <x-button spinner class="" label="Ratings" @click="$wire.create()"
                                             icon="o-plus" />
                                     </div>
                                 @endif
@@ -199,7 +243,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
     </div>
 
     {{-- Modal Rating --}}
-    <x-modal wire:model="createModal" title="Create Rating">
+    <x-modal wire:model="createModal" title="Masukkan Rating">
         <div class="grid gap-4">
             @foreach ($this->transaksi->orders as $item)
                 <div class="space-y-4">
@@ -217,7 +261,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
         <x-slot:actions>
             <div class="flex justify-end gap-4">
                 <x-button label="Cancel" icon="o-x-mark" @click="$wire.createModal = false" class="btn-outline" />
-                <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
+                <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
             </div>
         </x-slot:actions>
     </x-modal>

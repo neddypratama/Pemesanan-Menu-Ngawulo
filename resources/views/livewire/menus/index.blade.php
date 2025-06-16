@@ -43,12 +43,29 @@ new class extends Component {
     public function delete($id): void
     {
         $menu = Menu::findOrFail($id);
-        if ($menu->photo && file_exists(public_path($menu->photo))) {
-            unlink(public_path($menu->photo));
+
+        // Cek apakah menu memiliki relasi di tabel transaksis
+        if ($menu->cart()->exists() ) {
+            $this->error(title: "Menu \"$menu->name\" tidak dapat dihapus karena masih memiliki data cart.", position: 'toast-top');
+            return;
+        } elseif ($menu->ratings()->exists()) {
+            $this->error(title: "Menu \"$menu->name\" tidak dapat dihapus karena masih memiliki data rating.", position: 'toast-top');
+            return;
         }
-        logActivity('deleted', 'Menghapus data menu ' . $menu->name);
-        $menu->delete();
-        $this->warning("Menu $menu->name akan dihapus", position: 'toast-top');
+
+        // Jika tidak ada relasi, lanjutkan penghapusan
+        try {
+            if ($menu->photo && file_exists(public_path($menu->photo))) {
+                unlink(public_path($menu->photo));
+            }
+
+            logActivity('deleted', 'Menghapus data menu ' . $menu->name);
+            $menu->delete();
+
+            $this->warning(title: "Menu $menu->name telah dihapus", position: 'toast-top');
+        } catch (\Exception $e) {
+            $this->error(title: 'Gagal menghapus menu.', position: 'toast-top');
+        }
     }
 
     // Table headers
@@ -116,8 +133,8 @@ new class extends Component {
     <x-header title="Menus" separator progress-indicator>
         @if (auth()->user()->role_id != 3)
             <x-slot:actions>
-                <x-button label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" />
-                <x-button label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
+                <x-button spinner label="Create" link="/menus/create" responsive icon="o-plus" class="btn-primary" />
+                <x-button spinner label="Export" wire:click="export" icon="o-arrow-down-tray" class="btn-secondary" responsive />
             </x-slot:actions>
         @endif
     </x-header>
@@ -132,8 +149,8 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" responsive/>
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+                class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>
@@ -147,7 +164,7 @@ new class extends Component {
             @endscope
             @scope('actions', $menu)
                 @if (auth()->user()->role_id != 3)
-                    <x-button icon="o-trash" wire:click="delete({{ $menu['id'] }})"
+                    <x-button spinner icon="o-trash" wire:click="delete({{ $menu['id'] }})"
                         wire:confirm="Yakin ingin menghapus {{ $menu['name'] }}?" spinner
                         class="btn-ghost btn-sm text-red-500" />
                 @endif
@@ -156,7 +173,7 @@ new class extends Component {
     </x-card>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="Kategori" wire:model.live="kategori_id" :options="$kategori" icon="o-flag"
@@ -166,8 +183,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

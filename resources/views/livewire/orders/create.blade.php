@@ -34,7 +34,7 @@ new class extends Component {
     public function with(): array
     {
         return [
-            'users' => User::all(),
+            'users' => User::where('role_id', 4)->get(),
             'menus' => Menu::all(),
         ];
     }
@@ -44,7 +44,7 @@ new class extends Component {
         if ($value) {
             $tanggal = \Carbon\Carbon::parse($value)->format('Ymd');
             $count = Transaksi::whereDate('created_at', \Carbon\Carbon::parse($value)->toDateString())->count() + 1;
-            $this->invoice = 'INV-' . $tanggal . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+            $this->invoice = 'INV-' . $tanggal . '-' . Str::upper(Str::random(10));
         }
     }
 
@@ -87,7 +87,6 @@ new class extends Component {
             'total' => $this->total,
             'user_id' => $this->user_id,
             'tanggal' => $this->tanggal,
-            'keterangan' => $this->keterangan,
             'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
@@ -100,12 +99,12 @@ new class extends Component {
                 'transaksi_id' => $transaksi->id,
                 'menu_id' => $order['menu_id'],
                 'qty' => $order['qty'],
+                'keterangan' => $order['keterangan'] ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
             logActivity('created', $order->id . ' ditambahkan');
         }
-
 
         $this->success('Transaksi dan Order berhasil dibuat!', redirectTo: '/orders');
     }
@@ -116,6 +115,7 @@ new class extends Component {
             'menu_id' => null,
             'price' => 0,
             'qty' => 1,
+            'keterangan' => '', // tambahkan ini
         ];
     }
 
@@ -159,28 +159,20 @@ new class extends Component {
                     </div>
                     <x-input wire:model.live="orders.{{ $index }}.qty" label="Qty" type="number"
                         min="1" />
-                    <x-button icon="o-trash" class="bg-red-500 text-white"
+                    <x-input wire:model.live="orders.{{ $index }}.keterangan" label="Keterangan"
+                        hint="Tambahkan catatan" />
+                    <x-button spinner icon="o-trash" class="bg-red-500 text-white"
                         wire:click="removeOrder({{ $index }})" />
                 @endforeach
 
-                <x-button icon="o-plus" label="Tambah Item" wire:click="addOrder" class="mt-3" />
+                <x-button spinner icon="o-plus" label="Tambah Item" wire:click="addOrder" class="mt-3" />
                 <x-input label="Total" wire:model.live="total" prefix="Rp" money="IDR" readonly />
             </div>
         </div>
 
-        <hr class="my-5" />
-        <div class="lg:grid grid-cols-5">
-            <div class="col-span-2">
-                <x-header title="Note Transaction" subtitle="Note about the menu" size="text-2xl" />
-            </div>
-            <div class="col-span-3 grid gap-3">
-                <x-editor wire:model="keterangan" label="Keterangan" hint="Tambahkan catatan transaksi" />
-            </div>
-        </div>
-
         <x-slot:actions>
-            <x-button label="Cancel" link="/orders" />
-            <x-button label="Create" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
+            <x-button spinner label="Cancel" link="/orders" />
+            <x-button spinner label="Create" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
         </x-slot:actions>
     </x-form>
 </div>

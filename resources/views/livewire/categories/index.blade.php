@@ -6,7 +6,6 @@ use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Livewire\Attributes\Rule;
 use Livewire\WithFileUploads;
 
 new class extends Component {
@@ -31,15 +30,10 @@ new class extends Component {
     public ?Kategori $editingKategori = null; // Menyimpan data Kategori yang sedang diedit
 
     public string $editingName = ''; // Menyimpan nilai input untuk nama Kategori
-    public string $editingImage = '';
 
     public bool $createModal = false; // Untuk menampilkan modal create
 
     public string $newKategoriName = ''; // Untuk menyimpan input nama Kategori baru
-    public string $newKategoriImage = '';
-
-    public $newphoto;
-    public $editphoto;
 
     // Clear filters
     public function clear(): void
@@ -49,23 +43,30 @@ new class extends Component {
         $this->success('Filters cleared.', position: 'toast-top');
     }
 
-    // Delete action
     public function delete($id): void
     {
         $kategori = Kategori::findOrFail($id);
-        if ($kategori->image && file_exists(public_path($kategori->image))) {
-            unlink(public_path($kategori->image));
+
+        // Cek apakah kategori memiliki relasi di tabel transaksis
+        if ($kategori->menus()->exists()) {
+            $this->error(title: "Kategori \"$kategori->name\" tidak dapat dihapus karena masih memiliki data menu.", position: 'toast-top');
+            return;
         }
-        logActivity('deleted', 'Menghapus data kategori ' . $kategori->name);
-        $kategori->delete();
-        $this->warning("Kategori $kategori->name akan dihapus", position: 'toast-top');
+
+        // Jika tidak ada relasi, lanjutkan penghapusan
+        try {
+            logActivity('deleted', 'Menghapus data kategori ' . $kategori->name);
+            $kategori->delete();
+
+            $this->warning(title: "Kategori $kategori->name telah dihapus", position: 'toast-top');
+        } catch (\Exception $e) {
+            $this->error(title: 'Gagal menghapus kategori.', position: 'toast-top');
+        }
     }
 
     public function create(): void
     {
         $this->newKategoriName = ''; // Reset input sebelum membuka modal
-        $this->newKategoriImage = '';
-        $this->newphoto = null;
         $this->createModal = true;
     }
 
@@ -73,16 +74,9 @@ new class extends Component {
     {
         $this->validate([
             'newKategoriName' => 'required|string|max:255',
-            'newphoto' => 'nullable|image|max:1024',
         ]);
 
-        // Upload file and save the avatar `url` on User model
-        if ($this->newphoto) {
-            $url = $this->newphoto->store('categories', 'public');
-            $this->newKategoriImage = "/storage/$url";
-        }
-
-        Kategori::create(['name' => $this->newKategoriName, 'image' => $this->newKategoriImage]);
+        Kategori::create(['name' => $this->newKategoriName]);
 
         logActivity('created', $this->newKategoriName . ' ditambahkan');
 
@@ -96,7 +90,6 @@ new class extends Component {
 
         if ($this->editingKategori) {
             $this->editingName = $this->editingKategori->name;
-            $this->editphoto = $this->editingKategori->image;
             $this->editModal = true; // Tampilkan modal
         }
     }
@@ -105,28 +98,12 @@ new class extends Component {
     {
         $this->validate([
             'editingName' => 'required|string|max:255',
-            'editphoto' => 'nullable|image|max:1024',
         ]);
 
         if ($this->editingKategori) {
-            // Hapus gambar lama jika ada file baru diunggah
-            if ($this->editphoto instanceof \Illuminate\Http\UploadedFile) {
-                if ($this->editingKategori->image) {
-                    $oldImagePath = public_path(str_replace('/storage', 'storage', $this->editingKategori->image));
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
-
-                // Simpan gambar baru
-                $url = $this->editphoto->store('categories', 'public');
-                $this->editingKategori->image = "/storage/$url";
-            }
-
             // Update kategori
             $this->editingKategori->update([
                 'name' => $this->editingName,
-                'image' => $this->editingKategori->image,
             ]);
 
             logActivity('updated', 'Merubah data kategori ' . $this->editingName);
@@ -140,7 +117,6 @@ new class extends Component {
     public function headers(): array
     {
         return [
-            ['key' => 'avatar', 'label' => '', 'class' => 'w-5'],
             ['key' => 'id', 'label' => '#'],
             ['key' => 'name', 'label' => 'Name', 'class' => 'w-100'],
             ['key' => 'menus_count', 'label' => 'Menu', 'class' => 'w-100'], // Gunakan `users_count`
@@ -204,7 +180,7 @@ new class extends Component {
         </div>
         <div class="md:col-span-1 flex">
             <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
-                class="" responsive/>
+                class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
     </div>
@@ -213,14 +189,11 @@ new class extends Component {
     <x-card>
         <x-table :headers="$headers" :rows="$kategori" :sort-by="$sortBy" with-pagination
             @row-click="$wire.edit($event.detail.id)">
-            @scope('cell_avatar', $kategori)
-                <x-avatar image="{{ $kategori->image ?? '/empty-user.jpg' }}" class="!w-10" />
-            @endscope
             @scope('cell_menus_count', $kategori)
                 <span>{{ $kategori->menus_count }}</span>
             @endscope
             @scope('actions', $kategori)
-                <x-button icon="o-trash" wire:click="delete({{ $kategori['id'] }})"
+                <x-button icon="o-trash" wire:click.stop="delete({{ $kategori['id'] }})"
                     wire:confirm="Yakin ingin menghapus {{ $kategori['name'] }}?" spinner
                     class="btn-ghost btn-sm text-red-500" />
             @endscope
@@ -229,9 +202,6 @@ new class extends Component {
 
     <x-modal wire:model="createModal" title="Create Kategori">
         <div class="grid gap-4">
-            <x-file label="Image" wire:model.live="newphoto" accept="image/png, image/jpeg" crop-after-change>
-                <img src="{{ $kategori->image ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
-            </x-file>
             <x-input label="Kategori Name" wire:model.live="newKategoriName" />
         </div>
 
@@ -243,9 +213,6 @@ new class extends Component {
 
     <x-modal wire:model="editModal" title="Edit Kategori">
         <div class="grid gap-4">
-            <x-file label="Image" wire:model.live="editphoto" accept="image/png, image/jpeg" crop-after-change>
-                <img src="{{ $kategori->image ?? '/empty-user.jpg' }}" class="h-40 rounded-lg" />
-            </x-file>
             <x-input label="Kategori Name" wire:model.live="editingName" />
         </div>
 

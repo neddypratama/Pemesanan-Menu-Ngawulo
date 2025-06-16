@@ -20,7 +20,7 @@ new class extends Component {
     #[Rule('required|email')]
     public string $email = '';
 
-    #[Rule('required|digits_between:10,13|regex:/^[0-9]+$/')]
+    #[Rule('nullable|digits_between:10,13|regex:/^[0-9]+$/')]
     public string $no_hp = '';
 
     #[Rule('sometimes')]
@@ -29,7 +29,7 @@ new class extends Component {
     #[Rule('nullable|image|max:1024')]
     public $photo;
 
-    #[Rule('sometimes')]
+    #[Rule('nullable|sometimes')]
     public ?string $bio = null;
 
     public function with(): array
@@ -41,7 +41,10 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->fill($this->user);
+        $this->fill([
+            ...$this->user->toArray(),
+            'no_hp' => $this->user->no_hp ?? '', // isi default string kosong
+        ]);
     }
 
     public function save(): void
@@ -76,7 +79,6 @@ new class extends Component {
 ?>
 
 <div>
-    <dd>{{$this->photo}}</dd>
     <x-header title="Update {{ $user->name }}" separator />
 
     <x-form wire:submit="save">
@@ -111,10 +113,10 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" link="/users" />
+            <x-button spinner label="Cancel" link="/users" />
             {{-- The important thing here is `type="submit"` --}}
             {{-- The spinner property is nice! --}}
-            <x-button label="Save" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
+            <x-button spinner label="Save" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
         </x-slot:actions>
 
     </x-form>

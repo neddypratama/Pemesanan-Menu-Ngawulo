@@ -60,9 +60,14 @@
                                     <x-button icon="fas.gear" class="btn-circle btn-ghost" />
                                 </x-slot:trigger>
 
-                                <div class="grid grid-rows-2 grid-flow-col gap-4">
-                                    <x-button label="Logout" icon="o-power" link="/logout" responsive />
+                                <div class="grid grid-rows-3 grid-flow-col gap-4">
+                                    <!-- Di view client -->
+                                    <form action="/logout" method="POST">
+                                        @csrf
+                                        <x-button type="submit" label="Logout" icon="o-power" responsive />
+                                    </form>
                                     <x-theme-toggle class="btn" label="Theme" responsive />
+                                    <x-button label="Profil" icon="o-user" link="/profile" responsive />
                                 </div>
                             </x-dropdown>
                         </x-slot:actions>
@@ -70,14 +75,16 @@
 
                     <x-menu-separator />
 
-                    {{-- Admin & Kasir (Role 1, 2) --}}
-                    @if (in_array($user->role_id, [1, 2]))
-                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
-
+                    @if ($user->role_id === 1)
                         <x-menu-sub title="User Management" icon="fas.users-gear">
                             <x-menu-item title="Users" icon="o-users" link="/users" />
                             <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
                         </x-menu-sub>
+                    @endif
+
+                    {{-- Admin & Kasir (Role 1, 2) --}}
+                    @if (in_array($user->role_id, [1, 2]))
+                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
 
                         <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
                             <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />

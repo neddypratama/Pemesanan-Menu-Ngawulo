@@ -140,7 +140,7 @@ new class extends Component {
         </x-table>
     </x-card>
 
-    <x-modal wire:model.ive="detailModal" title="Detail Resep">
+    <x-modal wire:model.live="detailModal" title="Detail Resep">
         <div class="grid gap-4">
             <x-input label="Menu" wire:model.live="detailResepMenu" readonly />
             <x-editor wire:model.live="detailResepName" label="Resep" hint="The great resep" readonly />
@@ -160,8 +160,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

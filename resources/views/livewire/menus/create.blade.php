@@ -98,10 +98,10 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" link="/menus" />
+            <x-button spinner label="Cancel" link="/menus" />
             {{-- The important thing here is `type="submit"` --}}
             {{-- The spinner property is nice! --}}
-            <x-button label="Create" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
+            <x-button spinner label="Create" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
         </x-slot:actions>
 
     </x-form>

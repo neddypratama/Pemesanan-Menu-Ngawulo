@@ -119,12 +119,12 @@ new #[Layout('components.layouts.buy')] class extends Component {
             <!-- Add / Remove from Cart -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 @if ($isInCart)
-                    <x-button wire:click="removeFromCart" class="flex items-center text-sm rounded btn-error btn-sm"
+                    <x-button spinner wire:click="removeFromCart" class="flex items-center text-sm rounded btn-error btn-sm"
                         icon="fas.trash">
                         Hapus dari keranjang
                     </x-button>
                 @else
-                    <x-button wire:click="addToCart" class="flex items-center text-sm rounded btn-sm btn-primary"
+                    <x-button spinner wire:click="addToCart" class="flex items-center text-sm rounded btn-sm btn-primary"
                         icon="fas.shopping-cart">
                         Tambah ke keranjang
                     </x-button>

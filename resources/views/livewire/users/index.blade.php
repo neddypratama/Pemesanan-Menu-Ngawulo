@@ -39,34 +39,36 @@ new class extends Component {
     public function delete($id): void
     {
         $user = User::findOrFail($id);
-        if ($user->avatar && file_exists(public_path($user->avatar))) {
-            unlink(public_path($user->avatar));
+
+        // Cek apakah user memiliki relasi di tabel transaksis
+        if ($user->transaksi()->exists()) {
+            $this->error(title: "User \"$user->name\" tidak dapat dihapus karena masih memiliki data transaksi.", position: 'toast-top');
+            return;
         }
-        logActivity('deleted', 'Menghapus data user ' . $user->name);
-        $user->delete();
-        $this->warning("User $user->name akan dihapus", position: 'toast-top');
+
+        // Jika tidak ada relasi, lanjutkan penghapusan
+        try {
+            if ($user->avatar && file_exists(public_path($user->avatar))) {
+                unlink(public_path($user->avatar));
+            }
+
+            logActivity('deleted', 'Menghapus data user ' . $user->name);
+            $user->delete();    
+            $this->warning(title: "User $user->name telah dihapus", position: 'toast-top');
+        } catch (\Exception $e) {
+            $this->error(title: 'Gagal menghapus user.', position: 'toast-top');
+        }
     }
 
     // Table headers
     public function headers(): array
     {
-        return [
-            ['key' => 'avatar', 'label' => '', 'class' => 'w-1'], 
-            ['key' => 'id', 'label' => '#', 'class' => 'w-1'], 
-            ['key' => 'role_name', 'label' => 'Role'], 
-            ['key' => 'name', 'label' => 'Name', 'class' => 'w-64'], 
-            ['key' => 'no_hp', 'label' => 'No Telepon', 'sortable' => false],
-            ['key' => 'email', 'label' => 'E-mail', 'sortable' => false]];
+        return [['key' => 'avatar', 'label' => '', 'class' => 'w-1'], ['key' => 'id', 'label' => '#', 'class' => 'w-1'], ['key' => 'role_name', 'label' => 'Role'], ['key' => 'name', 'label' => 'Name', 'class' => 'w-64'], ['key' => 'no_hp', 'label' => 'No Telepon', 'sortable' => false], ['key' => 'email', 'label' => 'E-mail', 'sortable' => false]];
     }
 
     public function users(): LengthAwarePaginator
     {
-        return User::query()
-        ->withAggregate('role', 'name')
-        ->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))
-        ->when($this->role_id, fn(Builder $q) => $q->where('role_id', $this->role_id))
-        ->orderBy(...array_values($this->sortBy))
-        ->paginate($this->perPage);
+        return User::query()->withAggregate('role', 'name')->when($this->search, fn(Builder $q) => $q->where('name', 'like', "%$this->search%"))->when($this->role_id, fn(Builder $q) => $q->where('role_id', $this->role_id))->orderBy(...array_values($this->sortBy))->paginate($this->perPage);
     }
 
     public function with(): array
@@ -105,7 +107,7 @@ new class extends Component {
     <!-- HEADER -->
     <x-header title="Users" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" link="/users/create" responsive icon="o-plus" class="btn-primary" />
+            <x-button spinner label="Create" link="/users/create" responsive icon="o-plus" class="btn-primary" />
         </x-slot:actions>
     </x-header>
 
@@ -119,7 +121,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
                 class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
@@ -133,7 +135,7 @@ new class extends Component {
                 <x-avatar image="{{ $user->avatar ?? '/empty-user.jpg' }}" class="!w-10" />
             @endscope
             @scope('actions', $user)
-                <x-button icon="o-trash" wire:click="delete({{ $user['id'] }})"
+                <x-button spinner icon="o-trash" wire:click="delete({{ $user['id'] }})"
                     wire:confirm="Yakin ingin menghapus {{ $user['name'] }}?" spinner
                     class="btn-ghost btn-sm text-red-500" />
             @endscope
@@ -141,7 +143,7 @@ new class extends Component {
     </x-card>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Name..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="Roles" wire:model.live="role_id" :options="$roles" icon="o-flag"
@@ -149,8 +151,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

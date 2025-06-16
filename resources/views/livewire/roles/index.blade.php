@@ -48,9 +48,15 @@ new class extends Component {
     public function delete($id): void
     {
         $kategori = Role::findOrFail($id);
+
+        if ($kategori->users()->count() > 0) {
+            $this->error("Tidak bisa menghapus role '$kategori->name' karena masih digunakan oleh pengguna.", position: 'toast-top');
+            return;
+        }
+
         logActivity('deleted', 'Menghapus data role ' . $kategori->name);
         $kategori->delete();
-        $this->warning("Role $kategori->name akan dihapus", position: 'toast-top');
+        $this->warning("Role $kategori->name telah dihapus", position: 'toast-top');
     }
 
     public function create(): void
@@ -62,7 +68,7 @@ new class extends Component {
     public function saveCreate(): void
     {
         $this->validate([
-            'newRoleName' => 'required|string|max:255',
+            'newRoleName' => 'required|string|max:255|unique:roles,name',
         ]);
 
         Role::create(['name' => $this->newRoleName]);
@@ -144,7 +150,7 @@ new class extends Component {
     <!-- HEADER -->
     <x-header title="Roles" separator progress-indicator>
         <x-slot:actions>
-            <x-button label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
+            <x-button spinner label="Create" @click="$wire.create()" responsive icon="o-plus" class="btn-primary" />
         </x-slot:actions>
     </x-header>
 
@@ -158,7 +164,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
                 class="" responsive />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
@@ -172,7 +178,7 @@ new class extends Component {
                 <span>{{ $role->users_count }}</span>
             @endscope
             @scope('actions', $roles)
-                <x-button icon="o-trash" wire:click="delete({{ $roles['id'] }})"
+                <x-button spinner icon="o-trash" wire:click.stop="delete({{ $roles['id'] }})"
                     wire:confirm="Yakin ingin menghapus {{ $roles['name'] }}?" spinner
                     class="btn-ghost btn-sm text-red-500" />
             @endscope
@@ -185,8 +191,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.createModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveCreate" />
         </x-slot:actions>
     </x-modal>
 
@@ -196,13 +202,13 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
-            <x-button label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
+            <x-button spinner label="Cancel" icon="o-x-mark" @click="$wire.editModal=false" />
+            <x-button spinner label="Save" icon="o-check" class="btn-primary" wire:click="saveEdit" />
         </x-slot:actions>
     </x-modal>
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             {{-- <x-select placeholder="Country" wire:model.live="country_id" :options="$countries" icon="o-flag"
@@ -210,8 +216,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

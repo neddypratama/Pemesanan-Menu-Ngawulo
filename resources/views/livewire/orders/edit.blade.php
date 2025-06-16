@@ -23,9 +23,6 @@ new class extends Component {
     #[Rule('required|sometimes')]
     public ?int $user_id = null;
 
-    #[Rule('sometimes')]
-    public ?string $keterangan = null;
-
     #[Rule('required|array|min:1')]
     public array $orders = [];
 
@@ -34,7 +31,7 @@ new class extends Component {
     public function with(): array
     {
         return [
-            'users' => User::all(),
+            'users' => User::where('role_id', 4)->get(),
             'menus' => Menu::all(),
         ];
     }
@@ -46,7 +43,6 @@ new class extends Component {
         $this->invoice = $this->transaksi->invoice ?? '';
         $this->total = $this->transaksi->total ?? 0;
         $this->user_id = $this->transaksi->user_id;
-        $this->keterangan = $this->transaksi->keterangan;
         $this->tanggal =  \Carbon\Carbon::parse($this->transaksi->tanggal)->format('Y-m-d\TH:i:s');
 
         // Load orders
@@ -56,6 +52,7 @@ new class extends Component {
                     'menu_id' => $order->menu_id,
                     'qty' => $order->qty,
                     'price' => $order->menu->price ?? 0,
+                    'keterangan' => $order->keterangan ?? null,
                 ];
             })
             ->toArray();
@@ -84,7 +81,6 @@ new class extends Component {
             'invoice' => $this->invoice,
             'total' => $this->total,
             'user_id' => $this->user_id,
-            'keterangan' => $this->keterangan,
         ]);
         logActivity('updated', 'Merubah data transaksi ' . $this->transaksi->invoice);
 
@@ -95,6 +91,7 @@ new class extends Component {
                 'transaksi_id' => $this->transaksi->id,
                 'menu_id' => $order['menu_id'],
                 'qty' => $order['qty'],
+                'keterangan' => $order['keterangan'],
             ]);
             logActivity('updated', 'Merubah data order dari ' . $order->id);
         }
@@ -105,7 +102,7 @@ new class extends Component {
 
     public function addOrder(): void
     {
-        $this->orders[] = ['menu_id' => null, 'qty' => 1, 'price' => 0];
+        $this->orders[] = ['menu_id' => null, 'qty' => 1, 'price' => 0, 'keterangan' => null];
     }
 
     public function removeOrder(int $index): void
@@ -123,7 +120,7 @@ new class extends Component {
 ?>
 
 <div class="p-4 space-y-6">
-    <x-header title="Edit Transaction" separator progress-indicator />
+    <x-header title="Edit {{ $this->invoice }}" separator progress-indicator />
 
     <x-form wire:submit="save">
         <div class="lg:grid grid-cols-5">
@@ -150,27 +147,19 @@ new class extends Component {
                         <x-input wire:model.live="orders.{{ $index }}.price" label="Price" type="number" readonly />
                     </div>
                     <x-input wire:model.live="orders.{{ $index }}.qty" label="Qty" type="number" min="1" />
-                    <x-button icon="o-trash" class="bg-red-500 text-white"
+                    <x-input wire:model.live="orders.{{ $index }}.keterangan" label="Keterangan"
+                        hint="Tambahkan catatan" />
+                    <x-button spinner icon="o-trash" class="bg-red-500 text-white"
                         wire:click="removeOrder({{ $index }})" />
                 @endforeach
-                <x-button icon="o-plus" label="Tambah Item" wire:click="addOrder" class="mt-3" />
+                <x-button spinner icon="o-plus" label="Tambah Item" wire:click="addOrder" class="mt-3" />
                 <x-input label="Total" wire:model.live="total" prefix="Rp" money="IDR" readonly/>
             </div>
         </div>
 
-        <hr class="my-5" />
-        <div class="lg:grid grid-cols-5">
-            <div class="col-span-2">
-                <x-header title="Note Transaction" subtitle="Edit transaction notes" size="text-2xl" />
-            </div>
-            <div class="col-span-3 grid gap-3">
-                <x-editor wire:model="keterangan" label="Keterangan" hint="Tambahkan catatan transaksi" />
-            </div>
-        </div>
-
         <x-slot:actions>
-            <x-button label="Cancel" link="/orders" />
-            <x-button label="Update" icon="o-pencil" spinner="save" type="submit" class="btn-primary" />
+            <x-button spinner label="Cancel" link="/orders" />
+            <x-button spinner label="Update" icon="o-pencil" spinner="save" type="submit" class="btn-primary" />
         </x-slot:actions>
 
     </x-form>

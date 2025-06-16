@@ -118,7 +118,7 @@ new class extends Component {
 
         $transaksi->update(['status' => 'deliver']);
         $this->success('Pesanan siap diantar!', position: 'toast-top');
-        logActivity('deliver', 'Merubah status dekiver transaksi ' . $transaksi->invoice);
+        logActivity('deliver', 'Merubah status deliver transaksi ' . $transaksi->invoice);
     }
 };
 
@@ -139,7 +139,7 @@ new class extends Component {
                 class="" />
         </div>
         <div class="md:col-span-1 flex">
-            <x-button label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
+            <x-button spinner label="Filters" @click="$wire.drawer=true" icon="o-funnel" badge="{{ $filter }}"
                 class="" />
         </div>
         <!-- Dropdown untuk jumlah data per halaman -->
@@ -165,10 +165,10 @@ new class extends Component {
 
             @scope('actions', $transaksi)
                 <div class="flex space-x-2">
-                    <x-button icon="o-eye" tooltip="Detail" wire:click="detail({{ $transaksi['id'] }})"
+                    <x-button spinner icon="o-eye" tooltip="Detail" wire:click="detail({{ $transaksi['id'] }})"
                         class="btn-warning btn-sm" />
 
-                    <x-button icon="o-check-circle" tooltip="Selesaikan" class="btn-success btn-sm"
+                    <x-button spinner icon="o-check-circle" tooltip="Selesaikan" class="btn-success btn-sm"
                         @click="if (confirm('Yakin ingin menyelesaikan pesanan ini?')) { $wire.selesaikan({{ $transaksi['id'] }}) }" />
                 </div>
             @endscope
@@ -231,14 +231,14 @@ new class extends Component {
         @endif
 
         <x-slot:footer>
-            <x-button label="Tutup" class="btn-secondary" @click="$wire.showDetail = false" />
+            <x-button spinner label="Tutup" class="btn-secondary" @click="$wire.showDetail = false" />
         </x-slot:footer>
     </x-modal>
 
 
 
     <!-- FILTER DRAWER -->
-    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button class="lg:w-1/3">
+    <x-drawer wire:model="drawer" title="Filters" right separator with-close-button spinner class="lg:w-1/3">
         <div class="grid gap-5">
             <x-input placeholder="Search..." wire:model.live.debounce="search" clearable icon="o-magnifying-glass" />
             <x-select placeholder="User" wire:model.live="user_id" :options="$users" icon="o-flag"
@@ -246,8 +246,8 @@ new class extends Component {
         </div>
 
         <x-slot:actions>
-            <x-button label="Reset" icon="o-x-mark" wire:click="clear" spinner />
-            <x-button label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
+            <x-button spinner label="Reset" icon="o-x-mark" wire:click="clear" spinner />
+            <x-button spinner label="Done" icon="o-check" class="btn-primary" @click="$wire.drawer=false" />
         </x-slot:actions>
     </x-drawer>
 </div>

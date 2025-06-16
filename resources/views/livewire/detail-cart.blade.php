@@ -162,7 +162,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
             <x-card class="p-4 sm:p-6 rounded-2xl shadow" wire:poll="fetchCart">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold mb-4">Keranjang</h2>
-                    <x-button wire:click="goToHome" class="btn-gost mb-2" icon-right="fas.arrow-right">
+                    <x-button spinner wire:click="goToHome" class="btn-gost mb-2" icon-right="fas.arrow-right">
                         Cari menu
                     </x-button>
                 </div>
@@ -180,15 +180,15 @@ new #[Layout('components.layouts.buy')] class extends Component {
                         </div>
 
                         <div class="flex sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                            <x-button class="btn-sm size-0" icon="o-pencil"
+                            <x-button spinner class="btn-sm size-0" icon="o-pencil"
                                 wire:click="openCatatanModal({{ $item['id'] }})" tooltip="Catatan" responsive />
                             <div class="flex items-center">
-                                <x-button wire:click="decrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
+                                <x-button spinner wire:click="decrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
                                     icon="o-minus" responsive />
                                 <span class="mx-2 font-bold">{{ $item['qty'] }}</span>
-                                <x-button wire:click="incrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
+                                <x-button spinner wire:click="incrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
                                     icon="o-plus" responsive />
-                                <x-button wire:click="removeItem({{ $item['id'] }})"
+                                <x-button spinner wire:click="removeItem({{ $item['id'] }})"
                                     class="btn-sm btn-error ml-2 size-0" icon="o-trash" responsive />
                             </div>
                         </div>
@@ -212,7 +212,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     <hr class="my-5">
                     <p class="text-sm">Pastikan pesananmu sudah benar sebelum checkout.</p>
                 </div>
-                <x-button wire:click="goToCheckout" class="btn-primary w-full mt-6 py-2 justify-center">
+                <x-button spinner wire:click="goToCheckout" class="btn-primary w-full mt-6 py-2 justify-center">
                     Checkout
                 </x-button>
             </x-card>
@@ -226,8 +226,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
             <x-textarea label="Catatan" placeholder="Contoh: tanpa sambal, saus dipisah..." wire:model.live="catatan" />
 
             <x-slot:actions>
-                <x-button label="Batal" @click="$wire.showCatatanModal = false" />
-                <x-button label="Simpan" class="btn-primary" wire:click="simpanCatatan" />
+                <x-button spinner label="Batal" @click="$wire.showCatatanModal = false" />
+                <x-button spinner label="Simpan" class="btn-primary" wire:click="simpanCatatan" />
             </x-slot:actions>
         </x-form>
     </x-modal>

@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Livewire;
+
 use App\Models\Transaksi;
 use App\Models\Order;
 use App\Models\User;
@@ -11,30 +13,83 @@ use Carbon\Carbon;
 new class extends Component {
     use Toast;
 
-    public int $days = 30;
-
+    public string $period = 'month';
+    public $startDate;
+    public $endDate;
     public array $myChart = [];
-
     public array $categoryChart = [];
 
     public function mount()
     {
+        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->setDefaultDates();
         $this->chartGross();
         $this->chartCategories();
+    }
+
+    protected function setDefaultDates()
+    {
+        $now = Carbon::now();
+
+        switch ($this->period) {
+            case 'today':
+                $this->startDate = $now->copy()->startOfDay();
+                $this->endDate = $now->copy()->endOfDay();
+                break;
+            case 'week':
+                $this->startDate = $now->copy()->startOfWeek();
+                $this->endDate = $now->copy()->endOfWeek();
+                break;
+            case 'month':
+                $this->startDate = $now->copy()->startOfMonth();
+                $this->endDate = $now->copy()->endOfMonth();
+                break;
+            case 'year':
+                $this->startDate = $now->copy()->startOfYear();
+                $this->endDate = $now->copy()->endOfYear();
+                break;
+            default:
+                $this->startDate = $this->startDate ? Carbon::parse($this->startDate)->startOfDay() : $now->copy()->startOfMonth();
+                $this->endDate = $this->endDate ? Carbon::parse($this->endDate)->endOfDay() : $now->copy()->endOfMonth();
+        }
+    }
+
+    public function updatedPeriod()
+    {
+        $this->setDefaultDates();
+        $this->chartGross();
+        $this->chartCategories();
+    }
+
+    public function applyDateRange()
+    {
+        $this->validate([
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+        ]);
+
+        $this->period = 'custom';
+        $this->startDate = Carbon::parse($this->startDate)->startOfDay();
+        $this->endDate = Carbon::parse($this->endDate)->endOfDay();
+
+        $this->chartGross();
+        $this->chartCategories();
+        $this->toast('Periode tanggal berhasil diperbarui', 'success');
     }
 
     public function chartGross()
     {
         $data = Transaksi::where('status', 'success')
-            ->where('tanggal', '>=', Carbon::now()->subDays($this->days))
+            ->whereBetween('tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->orderBy('tanggal')
             ->get()
-            ->groupBy(fn($trx) => Carbon::parse($trx->tanggal)->format('Y-m-d')) // Group by date
-            ->map(fn($trx) => $trx->sum('total')) // Sum total per day
+            ->groupBy(fn($trx) => Carbon::parse($trx->tanggal)->format('Y-m-d'))
+            ->map(fn($trx) => $trx->sum('total'))
             ->toArray();
 
         $this->myChart = [
-            'type' => 'line', // Bisa diganti 'bar' jika ingin tampilan batang
+            'type' => 'line',
             'data' => [
                 'labels' => array_keys($data),
                 'datasets' => [
@@ -52,21 +107,15 @@ new class extends Component {
     public function chartCategories()
     {
         $orders = Order::join('menus', 'orders.menu_id', '=', 'menus.id')
-            ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id') // Join ke tabel transaksis
-            ->selectRaw('menus.kategori_id, SUM(orders.qty) as total_qty') // Sum qty per kategori
-            ->where('orders.created_at', '>=', Carbon::now()->subDays($this->days))
+            ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
+            ->selectRaw('menus.kategori_id, SUM(orders.qty) as total_qty')
+            ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->groupBy('menus.kategori_id')
             ->get();
 
         $kategoriNames = Kategori::whereIn('id', $orders->pluck('kategori_id'))->pluck('name', 'id')->toArray();
 
-        $data = $orders
-            ->mapWithKeys(
-                fn($order) => [
-                    $kategoriNames[$order->kategori_id] ?? 'Unknown' => $order->total_qty, // Gunakan total qty
-                ],
-            )
-            ->toArray();
+        $data = $orders->mapWithKeys(fn($order) => [$kategoriNames[$order->kategori_id] ?? 'Unknown' => $order->total_qty])->toArray();
 
         $colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#9C27B0', '#F44336', '#E91E63', '#03A9F4', '#009688', '#FF9800'];
 
@@ -77,74 +126,50 @@ new class extends Component {
                 'datasets' => [
                     [
                         'label' => 'Total Quantity per Category',
-                        'data' => array_values($data), // Total qty per kategori
+                        'data' => array_values($data),
                         'backgroundColor' => array_slice($colors, 0, count($data)),
-                    ],
-                ],
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'cutout' => '60%', // Ukuran lubang tengah
-                'plugins' => [
-                    'legend' => [
-                        'position' => 'bottom', // Posisi label di bawah chart
-                        'labels' => [
-                            'usePointStyle' => true, // Gunakan titik warna di label
-                            'pointStyle' => 'circle', // Bentuk ikon legenda
-                        ],
                     ],
                 ],
             ],
         ];
     }
 
-    public function updatedDays()
-    {
-        $this->chartGross();
-        $this->chartCategories();
-        // $this->grossTotal();
-        // $this->totalOrders();
-        // $this->newCustomers();
-        // $this->totalQty();
-    }
-
     public function grossTotal(): float
     {
         return Transaksi::where('status', 'success')
-            ->where('tanggal', '>=', Carbon::now()->subDays($this->days))
+            ->whereBetween('tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->sum('total');
     }
 
     public function totalOrders(): int
     {
-        return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id') // Join ke tabel transaksis
-            ->where('transaksis.status', 'success') // Hanya transaksi yang sukses
-            ->where('orders.created_at', '>=', Carbon::now()->subDays($this->days))
+        return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
+            ->where('transaksis.status', 'success')
+            ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->count();
     }
 
     public function newCustomers(): int
     {
         return User::where('role_id', 4)
-            ->where('created_at', '>=', Carbon::now()->subDays($this->days))
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
             ->count();
     }
 
     public function totalQty(): int
     {
-        return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id') // Join ke tabel transaksis
-            ->where('transaksis.status', 'success') // Hanya transaksi sukses
-            ->where('orders.created_at', '>=', Carbon::now()->subDays($this->days))
-            ->sum('orders.qty'); // Hitung total qty
+        return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
+            ->where('transaksis.status', 'success')
+            ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+            ->sum('orders.qty');
     }
 
     public function topCustomers()
     {
         return Transaksi::join('users', 'transaksis.user_id', '=', 'users.id')
             ->selectRaw('users.avatar, users.name, users.no_hp as phone_number, SUM(transaksis.total) as total_spent')
-            ->where('transaksis.status', 'success') // Hanya transaksi sukses
-            ->where('transaksis.tanggal', '>=', Carbon::now()->subDays($this->days))
+            ->where('transaksis.status', 'success')
+            ->whereBetween('transaksis.tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->groupBy('users.id', 'users.name', 'users.no_hp', 'users.avatar')
             ->orderByDesc('total_spent')
             ->limit(3)
@@ -155,11 +180,11 @@ new class extends Component {
     {
         return Order::join('menus', 'orders.menu_id', '=', 'menus.id')
             ->join('kategoris', 'menus.kategori_id', '=', 'kategoris.id')
-            ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id') // Join ke transaksi
+            ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
             ->selectRaw('menus.photo, kategoris.name as kategori_name, menus.name, SUM(orders.qty) as total_sold')
-            ->where('transaksis.status', 'success') // Hanya transaksi sukses
-            ->where('orders.created_at', '>=', Carbon::now()->subDays($this->days))
-            ->groupBy('menus.id', 'menus.name', 'menus.photo', 'kategoris.name') // Tambahkan semua kolom SELECT ke GROUP BY
+            ->where('transaksis.status', 'success')
+            ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+            ->groupBy('menus.id', 'menus.name', 'menus.photo', 'kategoris.name')
             ->orderByDesc('total_sold')
             ->limit(3)
             ->get();
@@ -174,7 +199,8 @@ new class extends Component {
             'totalQty' => $this->totalQty(),
             'topCustomers' => $this->topCustomers(),
             'bestSellers' => $this->bestSellers(),
-            'days' => $this->days,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
         ];
     }
 };
@@ -183,30 +209,78 @@ new class extends Component {
 <div class="">
     <x-header title="Dashboard" separator progress-indicator>
         <x-slot:actions>
-            <!-- Dropdown Select -->
             @php
-                $days = [
+                $periods = [
                     [
-                        'id' => 7,
-                        'name' => 'Last 7 days',
+                        'id' => 'today',
+                        'name' => 'Hari Ini',
+                        'hint' => 'Data dalam 24 jam terakhir',
+                        'icon' => 'o-clock',
                     ],
                     [
-                        'id' => 15,
-                        'name' => 'Last 15 days',
+                        'id' => 'week',
+                        'name' => 'Minggu Ini',
+                        'hint' => 'Data minggu berjalan',
+                        'icon' => 'o-calendar-days',
                     ],
                     [
-                        'id' => 30,
-                        'name' => 'Last 30 days',
+                        'id' => 'month',
+                        'name' => 'Bulan Ini',
+                        'hint' => 'Data bulan berjalan',
+                        'icon' => 'o-chart-pie',
+                    ],
+                    [
+                        'id' => 'year',
+                        'name' => 'Tahun Ini',
+                        'hint' => 'Data tahun berjalan',
+                        'icon' => 'o-chart-bar',
+                    ],
+                    [
+                        'id' => 'custom',
+                        'name' => 'Custom',
+                        'hint' => 'Pilih rentang tanggal khusus',
+                        'icon' => 'o-calendar',
                     ],
                 ];
             @endphp
 
-            <x-select label="" :options="$days" wire:model.live="days" />
+            <div class="flex flex-col gap-4">
+                <x-select wire:model.live="period" :options="$periods" option-label="name" option-value="id"
+                    option-description="hint" class="gap-4">
+                </x-select>
+
+                @if ($period === 'custom')
+                    <div class="flex flex-col gap-4 mt-2">
+                        <form wire:submit.prevent="applyDateRange">
+                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-end">
+                                <x-input type="date" label="Dari Tanggal" wire:model="startDate" :max="now()->format('Y-m-d')"
+                                    class="w-full md:w-auto" />
+
+                                <x-input type="date" label="Sampai Tanggal" wire:model="endDate" :min="$startDate"
+                                    :max="now()->format('Y-m-d')" class="w-full md:w-auto" />
+
+                                <x-button spinner label="Terapkan" type="submit" icon="o-check"
+                                    class="btn-primary mt-2 md:mt-6 w-full md:w-auto" />
+                            </div>
+
+                            @error('endDate')
+                                <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                            @enderror
+
+                            <div class="text-sm text-gray-500 mt-2">
+                                Periode terpilih:
+                                {{ $startDate->translatedFormat('d M Y') }} -
+                                {{ $endDate->translatedFormat('d M Y') }}
+                            </div>
+                        </form>
+                    </div>
+                @endif
+            </div>
         </x-slot:actions>
     </x-header>
 
     <!-- Grid Container -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Gross -->
         <x-card class=" rounded-lg shadow p-4">
             <div class="flex items-center justify-center gap-3">
@@ -253,12 +327,12 @@ new class extends Component {
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
-        <x-card class="grid col-span-4">
+        <x-card class="grid col-span-3">
             <x-slot:title>Gross</x-slot:title>
             <x-chart wire:model="myChart" />
         </x-card>
 
-        <x-card>
+        <x-card class="grid col-span-2">
             <x-slot:title>Category</x-slot:title>
             <x-chart wire:model="categoryChart" />
         </x-card>
@@ -414,5 +488,5 @@ new class extends Component {
         </div>
     </div>
 
-    
+
 </div>
