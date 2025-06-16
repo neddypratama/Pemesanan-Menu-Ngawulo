@@ -109,7 +109,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
             'tanggal' => now()->format('Y-m-d\TH:i'),
             'user_id' => $userId,
             'total' => $this->total,
-            'status' => 'new', // atau sesuai kebutuhan
+            'status' => 'pending', // atau sesuai kebutuhan
             'created_at' => now(),
             'updated_at' => now(),
         ]);

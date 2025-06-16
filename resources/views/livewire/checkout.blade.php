@@ -88,7 +88,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
             $snapToken = Snap::getSnapToken($params);
 
             $this->transaksi->update([
-                'token' => $snapToken,
+                'snap_token' => $snapToken,
                 'midtrans_id' => $orderId,
                 'status' => 'pending',
             ]);
