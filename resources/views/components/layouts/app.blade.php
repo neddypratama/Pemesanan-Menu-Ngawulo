@@ -61,11 +61,7 @@
                                 </x-slot:trigger>
 
                                 <div class="grid grid-rows-3 grid-flow-col gap-4">
-                                    <!-- Di view client -->
-                                    <form action="/logout" method="POST">
-                                        @csrf
-                                        <x-button type="submit" label="Logout" icon="o-power" responsive />
-                                    </form>
+                                    <x-button label="Logout" icon="o-power" link="/logout" responsive />
                                     <x-theme-toggle class="btn" label="Theme" responsive />
                                     <x-button label="Profil" icon="o-user" link="/profile" responsive />
                                 </div>

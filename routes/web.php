@@ -6,51 +6,6 @@ use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Http;
-
-    Route::get('/sso/callback', function (Request $request) {
-        $token = $request->query('token');
-
-        if (!$token) {
-            return redirect('/login')->withErrors(['Token SSO tidak ditemukan.']);
-        }
-
-        // Ambil data user dari server SSO (sekarang: 127.0.0.1:8000)
-        $response = Http::withToken($token)->get('http://127.0.0.1:8003/api/me');
-
-        if (!$response->successful()) {
-            return redirect('/login')->withErrors(['SSO gagal. Token tidak valid.']);
-        }
-
-        $userData = $response->json();
-
-        if (empty($userData['email']) || empty($userData['name'])) {
-            return redirect('/login')->withErrors(['Data user dari SSO tidak lengkap.']);
-        }
-
-        $user = User::where('email', $userData['email'])->first();
-
-        if (!$user) {
-            return redirect('/login')->withErrors([
-                'email' => 'User tidak terdaftar di sistem ini.',
-            ]);
-        }
-
-        Auth::login($user);
-        session()->regenerate();
-
-        // Redirect berdasarkan role
-        if ($user->role_id === 4) {
-            return redirect('/');
-        }
-
-        return redirect('/dashboard');
-    });
-
-    Route::get('/dashboard', function () {
-        return "Selamat datang di sistem Pengelolaan Stok, " . auth()->user()->name;
-    })->middleware('auth');
 
 // ======================
 // 👤 GUEST ROUTES
@@ -69,8 +24,7 @@ Route::middleware('guest')->group(function () {
 // 🔓 LOGOUT
 // ======================
 
-Route::post('/logout', function (Request $request) {
-    $user = Auth::user();
+Route::get('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();

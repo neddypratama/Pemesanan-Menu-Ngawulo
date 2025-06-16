@@ -18,10 +18,10 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
     {
         if (auth()->check()) {
             $user = auth()->user();
-            if ($user->role_id === 4 || $user->role_id === 3) {
-                return redirect('/login');
-            } else {
+            if ($user->role_id == 4) {
                 return redirect('/');
+            } else {
+                return redirect('/dashboard');
             }
         }
     }
@@ -40,7 +40,7 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
 
             $user = auth()->user();
 
-            if ($user->role_id === 4 || $user->role_id === 3) {
+            if ($user->role_id == 4) {
                 return redirect('/');
             } else {
                 return redirect('/dashboard');
