@@ -71,7 +71,7 @@
 
                     <x-menu-separator />
                     <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
-                    
+
                     @if ($user->role_id === 1)
                         <x-menu-sub title="User Management" icon="fas.users-gear">
                             <x-menu-item title="Users" icon="o-users" link="/users" />
@@ -83,8 +83,10 @@
                     @if (in_array($user->role_id, [1, 2]))
 
                         <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
-                            <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
-                            <x-menu-item title="Transactions" icon="fas.sack-dollar" link="/orders" />
+                            @if ($user->role_id == 1)
+                                <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
+                                <x-menu-item title="Transactions" icon="fas.sack-dollar" link="/orders" />
+                            @endif
                             <x-menu-item title="Customers" icon="fas.user" link="/customers" />
                         </x-menu-sub>
 
