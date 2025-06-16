@@ -1,14 +1,13 @@
 <?php
 
 use App\Http\Controllers\GoogleController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
-
-Route::view('/bayar', 'bayar');
-
+use Illuminate\Http\Request; // ✔️ Benar
 
 // ======================
 // 👤 GUEST ROUTES
@@ -21,6 +20,45 @@ Route::middleware('guest')->group(function () {
     Volt::route('/reset-password/{token}', 'auth.password-reset')->name('password.reset');
     Route::get('/auth-google-redirect', [GoogleController::class, 'google_redirect'])->name('google-redirect');
     Route::get('/auth-google-callback', [GoogleController::class, 'google_callback'])->name('google-callback');
+
+    Route::get('/sso/callback', function (Request $request) {
+        $token = $request->query('token');
+
+        if (!$token) {
+            return redirect('/login')->withErrors(['Token SSO tidak ditemukan.']);
+        }
+
+        // Ambil data user dari server SSO (sekarang: 127.0.0.1:8000)
+        $response = Http::withToken($token)->get('http://127.0.0.1:8003/api/me');
+
+        if (!$response->successful()) {
+            return redirect('/login')->withErrors(['SSO gagal. Token tidak valid.']);
+        }
+
+        $userData = $response->json();
+
+        if (empty($userData['email']) || empty($userData['name'])) {
+            return redirect('/login')->withErrors(['Data user dari SSO tidak lengkap.']);
+        }
+
+        $user = User::where('email', $userData['email'])->first();
+
+        if (!$user) {
+            return redirect('/login')->withErrors([
+                'email' => 'User tidak terdaftar di sistem ini.',
+            ]);
+        }
+
+        Auth::login($user);
+        session()->regenerate();
+
+        // Redirect berdasarkan role
+        if ($user->role_id == 4) {
+            return back();
+        }
+
+        return redirect('/');
+    });
 });
 
 // ======================

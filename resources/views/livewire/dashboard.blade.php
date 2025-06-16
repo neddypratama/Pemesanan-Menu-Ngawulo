@@ -244,38 +244,40 @@ new class extends Component {
                 ];
             @endphp
 
-            <div class="flex flex-col gap-4">
-                <x-select wire:model.live="period" :options="$periods" option-label="name" option-value="id"
-                    option-description="hint" class="gap-4">
-                </x-select>
+            @if (auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+                <div class="flex flex-col gap-4">
+                    <x-select wire:model.live="period" :options="$periods" option-label="name" option-value="id"
+                        option-description="hint" class="gap-4">
+                    </x-select>
 
-                @if ($period === 'custom')
-                    <div class="flex flex-col gap-4 mt-2">
-                        <form wire:submit.prevent="applyDateRange">
-                            <div class="flex flex-col md:flex-row gap-4 items-start md:items-end">
-                                <x-input type="date" label="Dari Tanggal" wire:model="startDate" :max="now()->format('Y-m-d')"
-                                    class="w-full md:w-auto" />
+                    @if ($period === 'custom')
+                        <div class="flex flex-col gap-4 mt-2">
+                            <form wire:submit.prevent="applyDateRange">
+                                <div class="flex flex-col md:flex-row gap-4 items-start md:items-end">
+                                    <x-input type="date" label="Dari Tanggal" wire:model="startDate"
+                                        :max="now()->format('Y-m-d')" class="w-full md:w-auto" />
 
-                                <x-input type="date" label="Sampai Tanggal" wire:model="endDate" :min="$startDate"
-                                    :max="now()->format('Y-m-d')" class="w-full md:w-auto" />
+                                    <x-input type="date" label="Sampai Tanggal" wire:model="endDate"
+                                        :min="$startDate" :max="now()->format('Y-m-d')" class="w-full md:w-auto" />
 
-                                <x-button spinner label="Terapkan" type="submit" icon="o-check"
-                                    class="btn-primary mt-2 md:mt-6 w-full md:w-auto" />
-                            </div>
+                                    <x-button spinner label="Terapkan" type="submit" icon="o-check"
+                                        class="btn-primary mt-2 md:mt-6 w-full md:w-auto" />
+                                </div>
 
-                            @error('endDate')
-                                <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
-                            @enderror
+                                @error('endDate')
+                                    <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                                @enderror
 
-                            <div class="text-sm text-gray-500 mt-2">
-                                Periode terpilih:
-                                {{ $startDate->translatedFormat('d M Y') }} -
-                                {{ $endDate->translatedFormat('d M Y') }}
-                            </div>
-                        </form>
-                    </div>
-                @endif
-            </div>
+                                <div class="text-sm text-gray-500 mt-2">
+                                    Periode terpilih:
+                                    {{ $startDate->translatedFormat('d M Y') }} -
+                                    {{ $endDate->translatedFormat('d M Y') }}
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </x-slot:actions>
     </x-header>
 
@@ -326,167 +328,168 @@ new class extends Component {
         </x-card>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
-        <x-card class="grid col-span-3">
-            <x-slot:title>Gross</x-slot:title>
-            <x-chart wire:model="myChart" />
-        </x-card>
+    @if (auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+            <x-card class="grid col-span-3">
+                <x-slot:title>Gross</x-slot:title>
+                <x-chart wire:model="myChart" />
+            </x-card>
 
-        <x-card class="grid col-span-2">
-            <x-slot:title>Category</x-slot:title>
-            <x-chart wire:model="categoryChart" />
-        </x-card>
-    </div>
+            <x-card class="grid col-span-2">
+                <x-slot:title>Category</x-slot:title>
+                <x-chart wire:model="categoryChart" />
+            </x-card>
+        </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="card bg-base-100 rounded-lg p-5 shadow-sm" wire:key="mary5dbffb64b26e4af4d38ea523d42ca460">
-            <div class="pb-5">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="text-2xl font-bold ">
-                            Top Customers
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="card bg-base-100 rounded-lg p-5 shadow-sm" wire:key="mary5dbffb64b26e4af4d38ea523d42ca460">
+                <div class="pb-5">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-2xl font-bold ">
+                                Top Customers
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        {{-- <a href="/users"
+                        <div class="flex items-center gap-2">
+                            {{-- <a href="/users"
                             wire:key="mary6123c214ff04a06bfa9a075b72dd8096" type="button"
                             class="btn normal-case btn-ghost btn-sm" wire:navigate=""> --}}
-                        <span class="">
-                            Customers
-                        </span>
-                        <span class="block">
-                            <svg class="inline w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"
-                                data-slot="icon">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
-                            </svg>
-                        </span>
-                        {{-- </a> --}}
+                            <span class="">
+                                Customers
+                            </span>
+                            <span class="block">
+                                <svg class="inline w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"
+                                    data-slot="icon">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
+                                </svg>
+                            </span>
+                            {{-- </a> --}}
+                        </div>
                     </div>
+                    <hr class="mt-3">
                 </div>
-                <hr class="mt-3">
-            </div>
-            <div>
-                @foreach ($topCustomers as $customer)
-                    <div>
-                        <div class="flex justify-start items-center gap-4 px-3 hover:bg-base-200/50 cursor-pointer">
-                            <div>
-                                <a href="" wire:navigate="">
-                                    <!-- AVATAR -->
-                                    <div class="py-3">
-                                        <div class="avatar">
-                                            <div class="w-11 rounded-full">
-                                                <img src="{{ $customer->avatar }}">
+                <div>
+                    @foreach ($topCustomers as $customer)
+                        <div>
+                            <div class="flex justify-start items-center gap-4 px-3 hover:bg-base-200/50 cursor-pointer">
+                                <div>
+                                    <a href="" wire:navigate="">
+                                        <!-- AVATAR -->
+                                        <div class="py-3">
+                                            <div class="avatar">
+                                                <div class="w-11 rounded-full">
+                                                    <img src="{{ $customer->avatar }}">
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <!-- CONTENT -->
-                            <div
-                                class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis truncate w-0 mary-hideable">
-                                <a href="" wire:navigate="">
-                                    <div class="py-3">
-                                        <div class="font-semibold truncate">
-                                            {{ $customer->name }}
-                                        </div>
-
-                                        <div class="text-gray-400 text-sm truncate">
-                                            {{ $customer->phone_number }}
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <!-- ACTION -->
-                            <a href="" wire:navigate="">
-                                <div class="py-3 flex items-center gap-3 mary-hideable">
-                                    <div class="badge font-bold">
-                                        Rp. {{ number_format($customer->total_spent, 2) }}
-                                    </div>
+                                    </a>
                                 </div>
-                            </a>
-                        </div>
+                                <!-- CONTENT -->
+                                <div
+                                    class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis truncate w-0 mary-hideable">
+                                    <a href="" wire:navigate="">
+                                        <div class="py-3">
+                                            <div class="font-semibold truncate">
+                                                {{ $customer->name }}
+                                            </div>
 
-                    </div>
-                @endforeach
+                                            <div class="text-gray-400 text-sm truncate">
+                                                {{ $customer->phone_number }}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- ACTION -->
+                                <a href="" wire:navigate="">
+                                    <div class="py-3 flex items-center gap-3 mary-hideable">
+                                        <div class="badge font-bold">
+                                            Rp. {{ number_format($customer->total_spent, 2) }}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                        </div>
+                    @endforeach
+                </div>
             </div>
-        </div>
 
-        <div class="card bg-base-100 rounded-lg p-5 shadow-sm" wire:key="mary5dbffb64b26e4af4d38ea523d42ca460">
-            <div class="pb-5">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="text-2xl font-bold ">
-                            Best Sellers
+            <div class="card bg-base-100 rounded-lg p-5 shadow-sm" wire:key="mary5dbffb64b26e4af4d38ea523d42ca460">
+                <div class="pb-5">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-2xl font-bold ">
+                                Best Sellers
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        {{-- <a href="/users"
+                        <div class="flex items-center gap-2">
+                            {{-- <a href="/users"
                                 wire:key="mary6123c214ff04a06bfa9a075b72dd8096" type="button"
                                 class="btn normal-case btn-ghost btn-sm" wire:navigate=""> --}}
-                        <span class="">
-                            Product
-                        </span>
-                        <span class="block">
-                            <svg class="inline w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"
-                                data-slot="icon">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
-                            </svg>
-                        </span>
-                        {{-- </a> --}}
+                            <span class="">
+                                Product
+                            </span>
+                            <span class="block">
+                                <svg class="inline w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"
+                                    data-slot="icon">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
+                                </svg>
+                            </span>
+                            {{-- </a> --}}
+                        </div>
                     </div>
+                    <hr class="mt-3">
                 </div>
-                <hr class="mt-3">
-            </div>
-            <div>
-                @foreach ($bestSellers as $menu)
-                    <div>
-                        <div class="flex justify-start items-center gap-4 px-3 hover:bg-base-200/50 cursor-pointer">
-                            <div>
-                                <a href="" wire:navigate="">
-                                    <!-- AVATAR -->
-                                    <div class="py-3">
-                                        <div class="avatar">
-                                            <div class="w-11 rounded-full">
-                                                <img src="{{ $menu->photo }}">
+                <div>
+                    @foreach ($bestSellers as $menu)
+                        <div>
+                            <div
+                                class="flex justify-start items-center gap-4 px-3 hover:bg-base-200/50 cursor-pointer">
+                                <div>
+                                    <a href="" wire:navigate="">
+                                        <!-- AVATAR -->
+                                        <div class="py-3">
+                                            <div class="avatar">
+                                                <div class="w-11 rounded-full">
+                                                    <img src="{{ $menu->photo }}">
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <!-- CONTENT -->
-                            <div
-                                class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis truncate w-0 mary-hideable">
-                                <a href="" wire:navigate="">
-                                    <div class="py-3">
-                                        <div class="font-semibold truncate">
-                                            {{ $menu->name }}
-                                        </div>
-
-                                        <div class="text-gray-400 text-sm truncate">
-                                            {{ $menu->kategori_name }}
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <!-- ACTION -->
-                            <a href="" wire:navigate="">
-                                <div class="py-3 flex items-center gap-3 mary-hideable">
-                                    <div class="badge font-bold">
-                                        {{ $menu->total_sold }}
-                                    </div>
+                                    </a>
                                 </div>
-                            </a>
-                        </div>
+                                <!-- CONTENT -->
+                                <div
+                                    class="flex-1 overflow-hidden whitespace-nowrap text-ellipsis truncate w-0 mary-hideable">
+                                    <a href="" wire:navigate="">
+                                        <div class="py-3">
+                                            <div class="font-semibold truncate">
+                                                {{ $menu->name }}
+                                            </div>
 
-                    </div>
-                @endforeach
+                                            <div class="text-gray-400 text-sm truncate">
+                                                {{ $menu->kategori_name }}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- ACTION -->
+                                <a href="" wire:navigate="">
+                                    <div class="py-3 flex items-center gap-3 mary-hideable">
+                                        <div class="badge font-bold">
+                                            {{ $menu->total_sold }}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
-    </div>
-
-
+    @endif
 </div>

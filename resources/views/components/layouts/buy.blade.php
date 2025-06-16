@@ -60,14 +60,7 @@
                     </x-menu-item>
 
                     <x-menu-separator />
-                    <!-- Form tersembunyi -->
-                    <form id="logout-form" action="/logout" method="POST" class="hidden">
-                        @csrf
-                    </form>
-
-                    <!-- Link Logout -->
-                    <x-menu-item title="Logout" icon="o-power" link="#"
-                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();" />
+                    <x-button label="Logout" icon="o-power" link="/logout" responsive />
                 </x-dropdown>
             @endif
         </x-slot:actions>

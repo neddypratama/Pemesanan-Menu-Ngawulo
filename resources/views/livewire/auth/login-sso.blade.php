@@ -25,22 +25,28 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class extends Compon
 
             $user = Auth::user();
 
-            // Buat token SSO
+            // Cek apakah model User punya trait HasApiTokens
+            if (!method_exists($user, 'createToken')) {
+                abort(500, 'Model User belum menggunakan HasApiTokens.');
+            }
+
+            // Buat token SSO dengan Sanctum
             $token = $user->createToken('sso_token')->plainTextToken;
 
             // Simpan token ke session
-            session(['sso_token' => $token]);
+            session()->put('sso_token', $token);
 
+            // Flash pesan sukses
             session()->flash('success', 'Berhasil login.');
 
             return redirect()->route('dashboard-sso');
         } else {
             $this->addError('email', 'Email atau password salah.');
         }
-
     }
 };
 ?>
+
 <div class="md:w-96 mx-auto mt-20">
     <div class="flex items-center gap-2 mb-6">
         <x-icon name="o-square-3-stack-3d" class="w-6 -mb-1 text-orange-500" />
@@ -52,7 +58,8 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class extends Compon
     <x-form wire:submit="login">
         <x-input label="E-mail" wire:model.defer="email" icon="o-envelope" />
         <x-password label="Password" wire:model.defer="password" icon="o-key" right />
-        <x-slot:actions class="flex justify-end">
+       <x-slot:actions class="flex justify-between">
+            <x-button label="Kembali" icon="fas.backward" class="btn" link="/login" />
             <x-button label="Login" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="login" />
         </x-slot:actions>
     </x-form>

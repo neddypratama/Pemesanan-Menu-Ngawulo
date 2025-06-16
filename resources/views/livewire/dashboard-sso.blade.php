@@ -10,7 +10,7 @@ new #[Layout('components.layouts.empty')] #[Title('Dashboard SSO')] class extend
 };
 ?>
 
-<div class="max-w-2xl mx-auto mt-16 space-y-6">
+<div class="max-w-2xl mx-auto mt-16 space-y-6 text-center justify-center">
     <div class="text-center">
         <h1 class="text-4xl font-bold text-orange-600">Dashboard SSO</h1>
         <p class="text-lg text-gray-600 mt-2">
@@ -36,10 +36,6 @@ new #[Layout('components.layouts.empty')] #[Title('Dashboard SSO')] class extend
             </a>
         </x-card>
     </div>
-    @endif
 
-    <form method="POST" action="/logout-sso" class="text-center">
-        @csrf
-        <x-button type="submit" class="btn-danger mt-6" label="Logout" icon="o-arrow-left-on-rectangle" />
-    </form>
+    <x-button label="Logout" icon="o-arrow-left-on-rectangle" link="/logout" responsive />
 </div>

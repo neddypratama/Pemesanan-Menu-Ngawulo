@@ -77,5 +77,11 @@ new #[Layout('components.layouts.empty')] #[Title('Login')] class
             <i class="fa-brands fa-google mr-2"></i>
             Login dengan Google
         </a>
+        <hr>
+        <a href="{{ route('login-sso') }}"
+            class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600">
+            <i class="fa-brands fa-google mr-2"></i>
+            Login SSO
+        </a>
     </x-form>
 </div>
