@@ -70,7 +70,8 @@
                     </x-list-item>
 
                     <x-menu-separator />
-
+                    <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
+                    
                     @if ($user->role_id === 1)
                         <x-menu-sub title="User Management" icon="fas.users-gear">
                             <x-menu-item title="Users" icon="o-users" link="/users" />
@@ -80,7 +81,6 @@
 
                     {{-- Admin & Kasir (Role 1, 2) --}}
                     @if (in_array($user->role_id, [1, 2]))
-                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
 
                         <x-menu-sub title="Orders & Ratings" icon="fas.cash-register">
                             <x-menu-item title="Ratings & Reviews" icon="fas.utensils" link="/ratings" />
@@ -97,7 +97,6 @@
 
                     {{-- Juru Masak (Role 3) --}}
                     @if ($user->role_id === 3)
-                        <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
                         <x-menu-sub title="Kasir" icon="fas.cash-register">
                             <x-menu-item title="Stok" icon="fas.bowl-food" link="/stok" />
                             <x-menu-item title="Transaksi" icon="fas.right-left" link="/transaksi" />
