@@ -72,7 +72,7 @@
                     <x-menu-separator />
                     <x-menu-item title="Dashboard" icon="fas.tachometer-alt" link="/dashboard" />
 
-                    @if ($user->role_id === 1)
+                    @if ($user->role_id == 1)
                         <x-menu-sub title="User Management" icon="fas.users-gear">
                             <x-menu-item title="Users" icon="o-users" link="/users" />
                             <x-menu-item title="Roles" icon="fas.layer-group" link="/roles" />
@@ -98,7 +98,7 @@
                     @endif
 
                     {{-- Juru Masak (Role 3) --}}
-                    @if ($user->role_id === 3)
+                    @if ($user->role_id == 3)
                         <x-menu-sub title="Barista" icon="fas.cash-register">
                             <x-menu-item title="Stok Menu" icon="fas.bowl-food" link="/stok" />
                             <x-menu-item title="Transaksi" icon="fas.right-left" link="/transaksi" />
