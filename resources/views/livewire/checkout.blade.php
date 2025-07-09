@@ -117,7 +117,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 } elseif ($status === 'cancel') {
                     $transaksi->update(['status' => 'cancel']);
                 }
-                logActivity($status, "Transaksi {$transaksi->invoice} berubah menjadi $status");
+                logActivity('success', "Transaksi {$transaksi->invoice} berubah menjadi $status");
                 $this->transaksi = $transaksi;
             }
         }
@@ -167,12 +167,13 @@ new #[Layout('components.layouts.buy')] class extends Component {
                             <img src="{{ $order['menu']['photo'] }}" class="w-12 h-12 rounded" />
                             <div>
                                 <p class="font-semibold ml-5">{{ $order['menu']['name'] }}</p>
-                                <p class="text-sm ml-5 font-thin">Rp. {{ number_format($order['menu']['price'], 0, ',', '.') }}</p>
+                                <p class="text-sm ml-5 font-thin">Rp.
+                                    {{ number_format($order['menu']['price'], 0, ',', '.') }}</p>
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <x-button spinner class="btn-sm" icon="o-pencil" wire:click="openCatatanModal({{ $order['id'] }})"
-                                label="Catatan" />
+                            <x-button spinner class="btn-sm" icon="o-pencil"
+                                wire:click="openCatatanModal({{ $order['id'] }})" label="Catatan" />
                             <span class="ml-5 font-bold">{{ $order['qty'] }}</span>
                         </div>
                     </div>
@@ -193,7 +194,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
                     <hr class="my-5">
                     <p class="text-sm">Silahkan melakukan pembayaran.</p>
                 </div>
-                <x-button spinner class="btn-primary w-full mt-6 py-2 justify-center" onclick="payNow('{{ $snapToken }}')">
+                <x-button spinner class="btn-primary w-full mt-6 py-2 justify-center"
+                    onclick="payNow('{{ $snapToken }}')">
                     Bayar Sekarang
                 </x-button>
             </x-card>
@@ -207,7 +209,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
     </div>
 </div>
 
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}">
+</script>
 <script>
     function payNow(token) {
         window.snap.pay(token, {

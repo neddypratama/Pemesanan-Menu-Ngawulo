@@ -56,7 +56,7 @@ class MenuSeeder extends Seeder
                 'updated_at' => Carbon::now()->subDays(rand(0, 30)),],
     
                 // Dessert
-                ['photo' => 'images/brownie.jpg', 'name' => 'Chocolate Brownie', 'price' => 25000, 'deskripsi' => 'Brownie cokelat dengan topping.', 'stok' => 10, 'kategori_id' => 7, 'created_at' => Carbon::now()->subDays(rand(0, 30)),
+                ['photo' => 'images/brownie.jpg', 'name' => 'Chocolate Brownies', 'price' => 25000, 'deskripsi' => 'Brownie cokelat dengan topping.', 'stok' => 10, 'kategori_id' => 7, 'created_at' => Carbon::now()->subDays(rand(0, 30)),
                 'updated_at' => Carbon::now()->subDays(rand(0, 30)),],
                 ['photo' => 'images/cheesecake.jpg', 'name' => 'Cheesecake', 'price' => 27000, 'deskripsi' => 'Kue keju lembut dengan topping buah.', 'stok' => 10, 'kategori_id' => 7, 'created_at' => Carbon::now()->subDays(rand(0, 30)),
                 'updated_at' => Carbon::now()->subDays(rand(0, 30)),],

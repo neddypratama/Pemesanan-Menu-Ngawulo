@@ -18,7 +18,7 @@ class Transaksi extends Model
         'status',
         'total',
         'midtrans_id',
-        'token',
+        'snap_token',
         'created_at',
         'updated_at',
     ];

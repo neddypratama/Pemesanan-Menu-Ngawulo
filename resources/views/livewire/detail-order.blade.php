@@ -49,10 +49,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 'rating' => $rating,
                 'review' => $review,
             ]);
-
-            Order::find($item->id)->update([
-                'rating' => 1,
-                'updated_at' => now(),
+            Transaksi::findOrFail($this->transaksi->id)->update([
+                'status' => 'reviewed',
             ]);
         }
 
@@ -139,44 +137,57 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
     {{-- Status --}}
     @php
-
         $successLogs = ActivityLog::where('action', 'success')
             ->where('description', 'like', '%' . $transaksi->invoice . '%')
             ->first();
         $successTime = $successLogs?->created_at->format('Y-m-d H:i:s');
-
+    
         $deliverLogs = ActivityLog::where('action', 'deliver')
             ->where('description', 'like', '%' . $transaksi->invoice . '%')
             ->first();
         $deliverTime = $deliverLogs?->created_at->format('Y-m-d H:i:s');
-
+    
         $doneLogs = ActivityLog::where('action', 'done')
             ->where('description', 'like', '%' . $transaksi->invoice . '%')
             ->first();
         $doneTime = $doneLogs?->created_at->format('Y-m-d H:i:s');
-
+    
         $cancelLogs = ActivityLog::where('action', 'cancel')
             ->where('description', 'like', '%' . $transaksi->invoice . '%')
             ->first();
         $cancelTime = $cancelLogs?->created_at->format('Y-m-d H:i:s');
-
+    
         $status = $transaksi->status;
         $created = $transaksi->created_at->format('Y-m-d H:i:s');
-
-        $isPaid = in_array($status, ['success', 'deliver', 'done']);
-        $isDelivered = in_array($status, ['deliver', 'done']);
-        $isDone = $status === 'done';
+    
+        $isPaid = in_array($status, ['success', 'deliver', 'done', 'reviewed']);
+        $isDelivered = in_array($status, ['deliver', 'done', 'reviewed']);
+        $isDone = in_array($status, ['done', 'reviewed']);
+        $isReviewed = $status === 'reviewed';
         $isCancelled = $status === 'cancel';
     @endphp
-
+    
     <div class="lg:col-span-4 space-y-4">
         <x-card class="rounded-xl border border-base-300 shadow-sm" title="Status">
             <hr class="mb-6">
             <div class="px-4">
-                <x-timeline-item title="Pesanan telah dilakukan" icon="o-map-pin" first subtitle="{{ $created }}"
-                    description="Kami telah menerima pesanan, menunggu konfirmasi pembayaran" :pending="false" />
-
+                {{-- Timeline 1: Pesanan dibuat --}}
+                <x-timeline-item
+                    title="Pesanan telah dilakukan"
+                    icon="o-map-pin"
+                    first
+                    :pending="false"
+                >
+                    <x-slot name="subtitle">
+                        {{ $created }}
+                    </x-slot>
+                    <x-slot name="description">
+                        Kami telah menerima pesanan, menunggu konfirmasi pembayaran
+                    </x-slot>
+                </x-timeline-item>
+    
                 @if ($isCancelled)
+                    {{-- Timeline 2: Dibatalkan --}}
                     <x-timeline-item title="Pesanan Dibatalkan" icon="o-x-circle" :pending="false" last>
                         <x-slot name="subtitle">
                             {{ $cancelTime }}
@@ -186,7 +197,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
                         </x-slot>
                     </x-timeline-item>
                 @else
-                    <x-timeline-item title="Pembayaran telah dikonfirmasi" icon="o-credit-card" :pending="!$isPaid" >
+                    {{-- Timeline 2: Pembayaran dikonfirmasi --}}
+                    <x-timeline-item title="Pembayaran telah dikonfirmasi" icon="o-credit-card" :pending="!$isPaid">
                         <x-slot name="subtitle">
                             @if ($status === 'pending')
                                 <a href="{{ url('/checkout/' . $transaksi->invoice) }}"
@@ -194,47 +206,42 @@ new #[Layout('components.layouts.buy')] class extends Component {
                                     Lanjutkan ke Pembayaran
                                 </a>
                             @else
-                                {{ $successTime }}
+                                {{ $isPaid ? $successTime : '-' }}
                             @endif
                         </x-slot>
                         <x-slot name="description">
                             Pembayaran telah dikonfirmasi, siap dibuat.
                         </x-slot>
                     </x-timeline-item>
-
+    
+                    {{-- Timeline 3: Pesanan selesai dibuat / dikirim --}}
                     <x-timeline-item title="Pesanan selesai dibuat" icon="o-truck" :pending="!$isDelivered">
                         <x-slot name="subtitle">
-                            {{ $isDelivered ? $deliverTime : '' }}
+                            {{ $isDelivered ? $deliverTime : '-' }}
                         </x-slot>
                         <x-slot name="description">
                             Pesanan sedang diantar.
                             @if ($status === 'deliver')
                                 <div class="mt-4">
-                                    <x-button label="Tandai Selesai" icon="o-check-circle" wire:click="markAsDone"
-                                        class="btn-success" />
+                                    <x-button label="Pesanan telah sampai" icon="o-check-circle"
+                                        wire:click="markAsDone" class="btn-success" />
                                 </div>
                             @endif
                         </x-slot>
                     </x-timeline-item>
-
+    
+                    {{-- Timeline 4: Pesanan selesai --}}
                     <x-timeline-item title="Pesanan selesai" icon="o-check-badge" :pending="!$isDone" last>
                         <x-slot name="subtitle">
-                            @if ($isDone)
-                                {{ $doneTime }}
-                            @endif
+                            {{ $isDone ? $doneTime : '-' }}
                         </x-slot>
                         <x-slot name="description">
                             Pesanan telah selesai diterima pelanggan.
-                            @if ($isDone)
-                                @foreach ($transaksi->orders as $item)
-                                    @if (!$item->rating == 1)
-                                        <div class="flex flex-col w-32">
-                                            <x-button spinner class="" label="Ratings" @click="$wire.create()"
-                                                icon="o-plus" />
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @if ($isDone && !$isReviewed)
+                                <div class="flex flex-col w-32">
+                                    <x-button spinner label="Ratings" @click="$wire.create()" icon="o-plus" />
+                                </div>
+                            @endif 
                         </x-slot>
                     </x-timeline-item>
                 @endif

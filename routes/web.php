@@ -23,13 +23,22 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/sso/callback', function (Request $request) {
         $token = $request->query('token');
+        $system = $request->query('system'); // contoh: ?token=xxx&system=1
 
         if (!$token) {
             return redirect('/login')->withErrors(['Token SSO tidak ditemukan.']);
         }
 
-        // Ambil data user dari server SSO (sekarang: 127.0.0.1:8000)
-        $response = Http::withToken($token)->get('http://127.0.0.1:8003/api/me');
+        $apiUrl = null;
+        if ($system == '1') {
+            $apiUrl = 'http://127.0.0.1:8003/api/me';
+        } elseif ($system == '2') {
+            $apiUrl = 'http://127.0.0.1:8002/api/me';
+        } else {
+            return redirect('/login')->withErrors(['Sistem SSO tidak dikenal.']);
+        }
+
+        $response = Http::withToken($token)->get($apiUrl);
 
         if (!$response->successful()) {
             return redirect('/login')->withErrors(['SSO gagal. Token tidak valid.']);
@@ -44,21 +53,19 @@ Route::middleware('guest')->group(function () {
         $user = User::where('email', $userData['email'])->first();
 
         if (!$user) {
-            return redirect('/login')->withErrors([
-                'email' => 'User tidak terdaftar di sistem ini.',
-            ]);
+            return redirect('/login')->withErrors(['User tidak terdaftar di sistem ini.']);
         }
 
         Auth::login($user);
         session()->regenerate();
 
-        // Redirect berdasarkan role
         if ($user->role_id == 4) {
             return back();
         }
 
         return redirect('/');
     });
+                            
 });
 
 // ======================

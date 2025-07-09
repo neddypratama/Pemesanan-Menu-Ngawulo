@@ -54,7 +54,7 @@ new class extends Component {
     // Table headers
     public function headers(): array
     {
-        return [['key' => 'invoice', 'label' => 'INV', 'class' => 'w-64'], ['key' => 'user_name', 'label' => 'User', 'class' => 'w-48'], ['key' => 'total', 'label' => 'Total', 'format' => ['currency', '2,.', 'Rp. '], 'class' => 'w-36'], ['key' => 'status', 'label' => 'Status', 'class' => 'w-24'], ['key' => 'tanggal', 'label' => 'Tanggal', 'class' => 'w-40', 'format' => ['date', 'H:i:s d/m/Y']]];
+        return [['key' => 'invoice', 'label' => 'INV', 'class' => 'w-64'], ['key' => 'user_name', 'label' => 'User', 'class' => 'w-48'], ['key' => 'status', 'label' => 'Status', 'class' => 'w-24'], ['key' => 'tanggal', 'label' => 'Tanggal', 'class' => 'w-40', 'format' => ['date', 'H:i:s d/m/Y']]];
     }
 
     public function transaksis(): LengthAwarePaginator

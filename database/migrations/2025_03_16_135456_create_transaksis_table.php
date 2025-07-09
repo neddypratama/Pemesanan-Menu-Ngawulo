@@ -20,7 +20,7 @@ return new class extends Migration
             // $table->integer('no_meja');
             $table->string('midtrans_id')->nullable();
             $table->string('snap_token')->nullable();
-            $table->enum('status', ['new', 'success', 'deliver', 'done', 'pending', 'error', 'expire', 'cancel']);
+            $table->enum('status', ['new', 'success', 'deliver', 'done', 'pending', 'error', 'expire', 'cancel', 'reviewed']);
             $table->timestamps();
             
         });
