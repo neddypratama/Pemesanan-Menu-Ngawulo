@@ -80,7 +80,7 @@ new class extends Component {
 
     public function chartGross()
     {
-        $data = Transaksi::where('status', 'success')
+        $data = Transaksi::whereNotIn('status', ['pending', 'cancel'])
             ->whereBetween('tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->orderBy('tanggal')
             ->get()
@@ -108,6 +108,7 @@ new class extends Component {
     {
         $orders = Order::join('menus', 'orders.menu_id', '=', 'menus.id')
             ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
+            ->whereNotIn('transaksis.status', ['pending', 'cancel'])
             ->selectRaw('menus.kategori_id, SUM(orders.qty) as total_qty')
             ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->groupBy('menus.kategori_id')
@@ -136,7 +137,7 @@ new class extends Component {
 
     public function grossTotal(): float
     {
-        return Transaksi::where('status', 'success')
+        return Transaksi::whereNotIn('status', ['pending', 'cancel'])
             ->whereBetween('tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->sum('total');
     }
@@ -144,7 +145,7 @@ new class extends Component {
     public function totalOrders(): int
     {
         return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
-            ->where('transaksis.status', 'success')
+            ->whereNotIn('transaksis.status', ['pending', 'cancel'])
             ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->count();
     }
@@ -159,7 +160,7 @@ new class extends Component {
     public function totalQty(): int
     {
         return Order::join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
-            ->where('transaksis.status', 'success')
+            ->whereNotIn('transaksis.status', ['pending', 'cancel'])
             ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->sum('orders.qty');
     }
@@ -168,7 +169,7 @@ new class extends Component {
     {
         return Transaksi::join('users', 'transaksis.user_id', '=', 'users.id')
             ->selectRaw('users.avatar, users.name, users.no_hp as phone_number, SUM(transaksis.total) as total_spent')
-            ->where('transaksis.status', 'success')
+            ->whereNotIn('transaksis.status', ['pending', 'cancel'])
             ->whereBetween('transaksis.tanggal', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->groupBy('users.id', 'users.name', 'users.no_hp', 'users.avatar')
             ->orderByDesc('total_spent')
@@ -182,7 +183,7 @@ new class extends Component {
             ->join('kategoris', 'menus.kategori_id', '=', 'kategoris.id')
             ->join('transaksis', 'orders.transaksi_id', '=', 'transaksis.id')
             ->selectRaw('menus.photo, kategoris.name as kategori_name, menus.name, SUM(orders.qty) as total_sold')
-            ->where('transaksis.status', 'success')
+            ->whereNotIn('transaksis.status', ['pending', 'cancel'])
             ->whereBetween('orders.created_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->groupBy('menus.id', 'menus.name', 'menus.photo', 'kategoris.name')
             ->orderByDesc('total_sold')
