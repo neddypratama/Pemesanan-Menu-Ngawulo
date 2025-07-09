@@ -169,6 +169,9 @@ new class extends Component {
     <x-card>
         <x-table :headers="$headers" :rows="$transaksi" :sort-by="$sortBy" with-pagination
             link="orders/{id}/detail?invoice={invoice}&user={user.name}">
+            @scope('cell_user_name', $transaksi)
+                {{ $transaksi['user_name'] ?? ($transaksi['guest_name'] ?? '-') }}
+            @endscope
             @scope('cell_status', $transaksi)
                 @php
                     $colors = [

@@ -27,7 +27,7 @@ class TransaksiExport implements FromCollection, WithHeadings
                     $jumlah,
                     $harga,
                     $harga * $jumlah,
-                    $transaksi->user->name ?? '-', // Nama pembeli
+                    $transaksi->user->name ?? $transaksi->guest_name, // Nama pembeli
                 ];
             });
         });
