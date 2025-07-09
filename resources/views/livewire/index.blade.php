@@ -111,11 +111,10 @@ new #[Layout('components.layouts.buy')] class extends Component {
     <!-- Daftar Menu -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         @forelse ($menus as $menu)
-            <x-card title="{{ $menu->name }}"
-                class="cursor-pointer hover:shadow-lg transition relative {{ $menu->stock <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                @if ($menu->stock > 0) wire:click="goToDetail({{ $menu->id }})" @endif>
+            <x-card title="{{ $menu->name }}" class="cursor-pointer hover:shadow-lg transition"
+                wire:click="goToDetail({{ $menu->id }})">
                 @php
-                    $averageRating = round($menu->ratings_avg_rating ?? 0);
+                    $averageRating = round($menu->ratings_avg_rating ?? 0); // dari withAvg
                     $totalRatings = $menu->ratings_count ?? 0;
                 @endphp
                 <div class="flex items-center gap-1">
@@ -135,12 +134,6 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 <x-slot:menu>
                     Rp. {{ number_format($menu->price, 0, ',', '.') }}
                 </x-slot:menu>
-
-                @if ($menu->stock <= 0)
-                    <div class="absolute inset-0 bg-gray-200 bg-opacity-70 flex items-center justify-center rounded">
-                        <span class="text-red-600 font-semibold text-lg">Habis</span>
-                    </div>
-                @endif
             </x-card>
         @empty
             <p class="col-span-full text-center">Menu tidak ditemukan.</p>
