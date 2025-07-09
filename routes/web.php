@@ -80,7 +80,15 @@ Route::get('/logout', function (Request $request) {
     return redirect()->route('login');
 });
 
-
+ // ======================
+    // 👤 ROLE: 4 (Pelanggan)
+    // ======================
+    Volt::route('/', 'index')->name('index');
+    Volt::route('/detail/{menu}', 'detail')->name('detail');
+    Volt::route('/my-orders', 'my-order');
+    Volt::route('/my-orders/{transaksi}', 'detail-order')->name('orders.show');
+    Volt::route('/cart', 'detail-cart');
+    Volt::route('/checkout/{invoice}', 'checkout');
 
 // ======================
 // 🔐 AUTHENTICATED ROUTES
@@ -98,18 +106,6 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:1,2,3')->group(function() {
         Volt::route('/dashboard', 'dashboard');
-    });
-
-    // ======================
-    // 👤 ROLE: 4 (Pelanggan)
-    // ======================
-    Route::middleware('role:4')->group(function () {
-        Volt::route('/', 'index')->name('index');
-        Volt::route('/detail/{menu}', 'detail')->name('detail');
-        Volt::route('/my-orders', 'my-order');
-        Volt::route('/my-orders/{transaksi}', 'detail-order')->name('orders.show');
-        Volt::route('/cart', 'detail-cart');
-        Volt::route('/checkout/{invoice}', 'checkout');
     });
 
     // ======================

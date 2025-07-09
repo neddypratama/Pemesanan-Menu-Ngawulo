@@ -45,7 +45,7 @@
             </x-dropdown>
 
             @if (!auth()->check())
-                <x-button label="Login" icon="o-user" link="###" class="btn-ghost btn-sm ml-auto" responsive />
+                <x-button label="Login" icon="o-user" link="/login" class="btn-ghost btn-sm ml-auto" responsive />
             @else
                 <x-dropdown class="ml-auto">
                     <x-slot:trigger>

@@ -33,7 +33,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $cart->update([
             'keterangan' => $this->catatan,
         ]);
-        logActivity('update', 'Menambahkan keterangan untuk ' . $cart->menu->name );
+        logActivity('update', 'Menambahkan keterangan untuk ' . $cart->menu->name);
 
         $this->showCatatanModal = false;
         $this->fetchCart();
@@ -59,7 +59,7 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->fetchCart();
         $this->dispatch('cartUpdated');
         $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
-        logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name .' di cart' );
+        logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name . ' di cart');
     }
 
     public function decrementQty($id)
@@ -71,13 +71,13 @@ new #[Layout('components.layouts.buy')] class extends Component {
         $this->fetchCart();
         $this->dispatch('cartUpdated');
         $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
-        logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name .' di cart' );
+        logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name . ' di cart');
     }
 
     public function removeItem($id)
     {
         $cart = Cart::find($id);
-        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart' );
+        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
         $cart->delete();
         $this->fetchCart();
         $this->dispatch('cartUpdated');
@@ -92,31 +92,34 @@ new #[Layout('components.layouts.buy')] class extends Component {
     public function goToCheckout()
     {
         if (empty($this->cart)) {
-            return; // Tidak ada item, tidak lanjut
+            return;
         }
 
-        $userId = Auth::id();
+        $userId = Auth::id(); // bisa null kalau guest
+        $sessionId = session()->getId(); // untuk identifikasi guest cart
+        $guestName = session('guest_name'); // simpan nama guest jika ada di session
 
-        $value = now();
-        $tanggal = \Carbon\Carbon::parse($value)->format('Ymd');
-        $count = Transaksi::whereDate('created_at', \Carbon\Carbon::parse($value)->toDateString())->count() + 1;
-        $this->invoice = 'INV-' . $tanggal . '-' .Str::upper(Str::random(10));
+        $this->invoice = 'INV-' . now()->format('Ymd') . '-' . Str::upper(Str::random(10));
 
-        // dd($this->invoice);
-        // 1. Buat transaksi utama
+        // Hitung total transaksi
+        $total = collect($this->cart)->sum(fn($item) => $item['menu']['price'] * $item['qty']);
+
+        // 1. Buat transaksi
         $transaction = Transaksi::create([
             'invoice' => $this->invoice,
             'tanggal' => now()->format('Y-m-d\TH:i'),
             'user_id' => $userId,
-            'total' => $this->total,
-            'status' => 'pending', // atau sesuai kebutuhan
+            'session_id' => $sessionId,
+            'guest_name' => $guestName,
+            'total' => $total,
+            'status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        logActivity('create', 'Membuat transaksi baru dengan invoice ' . $this->invoice );
+        logActivity('create', 'Membuat transaksi baru dengan invoice ' . $this->invoice);
 
-        // 2. Masukkan item cart ke order detail
+        // 2. Masukkan cart ke order
         foreach ($this->cart as $item) {
             $order = Order::create([
                 'transaksi_id' => $transaction->id,
@@ -129,16 +132,22 @@ new #[Layout('components.layouts.buy')] class extends Component {
             logActivity('create', 'Membuat order dengan menu ' . $order->menu->name);
         }
 
-        // 3. Hapus semua cart
-        $cart = Cart::where('user_id', $userId);
-        logActivity('delete', 'Menghapus cart oleh user ' . auth()->user()->name );
-        $cart->delete();
+        // 3. Hapus cart
+        $cartQuery = Cart::query();
+        if ($userId) {
+            $cartQuery->where('user_id', $userId);
+        } else {
+            $cartQuery->where('session_id', $sessionId);
+        }
+        $cartQuery->delete();
 
-        // 4. Perbarui cart di frontend
+        logActivity('delete', 'Menghapus cart oleh ' . ($userId ? auth()->user()->name : $guestName));
+
+        // 4. Perbarui tampilan cart
         $this->fetchCart();
         $this->dispatch('cartUpdated');
 
-        // 5. Redirect ke halaman checkout dengan ID transaksi
+        // 5. Redirect ke checkout
         return redirect("/checkout/{$transaction->invoice}");
     }
 
@@ -183,11 +192,11 @@ new #[Layout('components.layouts.buy')] class extends Component {
                             <x-button spinner class="btn-sm size-0" icon="o-pencil"
                                 wire:click="openCatatanModal({{ $item['id'] }})" tooltip="Catatan" responsive />
                             <div class="flex items-center">
-                                <x-button spinner wire:click="decrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
-                                    icon="o-minus" responsive />
+                                <x-button spinner wire:click="decrementQty({{ $item['id'] }})"
+                                    class="btn-sm rounded size-0" icon="o-minus" responsive />
                                 <span class="mx-2 font-bold">{{ $item['qty'] }}</span>
-                                <x-button spinner wire:click="incrementQty({{ $item['id'] }})" class="btn-sm rounded size-0"
-                                    icon="o-plus" responsive />
+                                <x-button spinner wire:click="incrementQty({{ $item['id'] }})"
+                                    class="btn-sm rounded size-0" icon="o-plus" responsive />
                                 <x-button spinner wire:click="removeItem({{ $item['id'] }})"
                                     class="btn-sm btn-error ml-2 size-0" icon="o-trash" responsive />
                             </div>

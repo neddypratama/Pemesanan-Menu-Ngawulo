@@ -7,56 +7,79 @@ use Mary\Traits\Toast;
 
 new class extends Component {
     use Toast;
+
     public array $cartItems = [];
 
     public function mount(): void
     {
+        // Pastikan session dimulai
+        session()->put('init_cart_session', true);
         $this->loadCart();
     }
 
     public function loadCart(): void
     {
         if (Auth::check()) {
-            $this->cartItems = Cart::with('menu')->where('user_id', Auth::id())->get()->toArray();
+            $this->cartItems = Cart::with('menu')
+                ->where('user_id', Auth::id())
+                ->get()
+                ->toArray();
+        } else {
+            $sessionId = session()->getId();
+            $this->cartItems = Cart::with('menu')
+                ->whereNull('user_id')
+                ->where('session_id', $sessionId)
+                ->get()
+                ->toArray();
         }
     }
 
     public function incrementQty($id): void
     {
-        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->first();
+        $cart = $this->findCartItem($id);
         if ($cart) {
             $cart->qty += 1;
             $cart->save();
             $this->loadCart();
-            $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+            $this->success('Jumlah diperbaharui!', position: 'toast-bottom');
             logActivity('update', 'Menambahkan qty menu ' . $cart->menu->name . ' di cart');
         }
     }
 
     public function decrementQty($id): void
     {
-        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->first();
+        $cart = $this->findCartItem($id);
         if ($cart && $cart->qty > 1) {
             $cart->qty -= 1;
             $cart->save();
             $this->loadCart();
-            $this->success('Jumlah diperbaharui!', position: 'toast-buttom');
+            $this->success('Jumlah diperbaharui!', position: 'toast-bottom');
             logActivity('update', 'Mengurangi qty menu ' . $cart->menu->name . ' di cart');
         }
     }
 
     public function deleteCartItem($id): void
     {
-        $cart = Cart::where('id', $id)->where('user_id', Auth::id())->first();
-        logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
-        $cart->delete();
-        $this->loadCart();
-        $this->error('Dihapus dari keranjang!', position: 'toast-buttom');
+        $cart = $this->findCartItem($id);
+        if ($cart) {
+            logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
+            $cart->delete();
+            $this->loadCart();
+            $this->error('Dihapus dari keranjang!', position: 'toast-bottom');
+        }
     }
 
     public function clearCart(): void
     {
-        $carts = Cart::where('user_id', Auth::id())->get();
+        $query = Cart::with('menu');
+
+        if (Auth::check()) {
+            $query->where('user_id', Auth::id());
+        } else {
+            $query->whereNull('user_id')->where('session_id', session()->getId());
+        }
+
+        $carts = $query->get();
 
         foreach ($carts as $cart) {
             logActivity('delete', 'Menghapus ' . $cart->menu->name . ' dari cart');
@@ -65,6 +88,19 @@ new class extends Component {
 
         $this->loadCart();
         $this->error('Keranjang dihapus!', position: 'toast-bottom');
+    }
+
+    protected function findCartItem($id): ?Cart
+    {
+        $query = Cart::with('menu')->where('id', $id);
+
+        if (Auth::check()) {
+            $query->where('user_id', Auth::id());
+        } else {
+            $query->whereNull('user_id')->where('session_id', session()->getId());
+        }
+
+        return $query->first();
     }
 
     protected $listeners = ['cartUpdated' => 'loadCart'];

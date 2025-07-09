@@ -69,15 +69,25 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
         $orderId = $forceNew ? 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(5) : ($this->transaksi->midtrans_id ?: 'ORDER-' . now()->format('YmdHis') . '-' . Str::random(5));
 
+        // Customer details: cek apakah ada user atau guest
+        if ($this->transaksi->user) {
+            $customer = [
+                'first_name' => $this->transaksi->user->name,
+                'email' => $this->transaksi->user->email,
+            ];
+        } else {
+            $customer = [
+                'first_name' => $this->transaksi->guest_name ?? 'Guest',
+                'email' => 'guest@example.com', // Email dummy untuk Midtrans
+            ];
+        }
+
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
                 'gross_amount' => (int) $this->transaksi->total,
             ],
-            'customer_details' => [
-                'first_name' => $this->transaksi->user->name,
-                'email' => $this->transaksi->user->email,
-            ],
+            'customer_details' => $customer,
         ];
 
         try {
@@ -93,7 +103,8 @@ new #[Layout('components.layouts.buy')] class extends Component {
 
             $this->snapToken = $snapToken;
         } catch (\Exception $e) {
-            $this->generateSnapToken(true);
+            report($e); // opsional, log error agar lebih mudah debug
+            $this->generateSnapToken(true); // paksa buat order ID baru
         }
     }
 

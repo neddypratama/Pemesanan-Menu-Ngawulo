@@ -99,8 +99,8 @@
 
                     {{-- Juru Masak (Role 3) --}}
                     @if ($user->role_id === 3)
-                        <x-menu-sub title="Kasir" icon="fas.cash-register">
-                            <x-menu-item title="Stok" icon="fas.bowl-food" link="/stok" />
+                        <x-menu-sub title="Barista" icon="fas.cash-register">
+                            <x-menu-item title="Stok Menu" icon="fas.bowl-food" link="/stok" />
                             <x-menu-item title="Transaksi" icon="fas.right-left" link="/transaksi" />
                             <x-menu-item title="Resep" icon="fas.book" link="/resep" />
                         </x-menu-sub>

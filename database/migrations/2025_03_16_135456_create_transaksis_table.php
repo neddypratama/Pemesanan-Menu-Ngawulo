@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('transaksis', function (Blueprint $table) {
             $table->id();
             $table->string('invoice');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('user_id')->nullable()->constrained('users');
+            $table->string('session_id')->nullable();  
+            $table->string('guest_name')->nullable();
             $table->dateTime('tanggal');
             $table->integer('total');
             // $table->integer('no_meja');

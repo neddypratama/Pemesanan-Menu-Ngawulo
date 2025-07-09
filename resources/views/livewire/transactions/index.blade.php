@@ -19,21 +19,20 @@ new class extends Component {
 
     public array $sortBy = ['column' => 'id', 'direction' => 'asc'];
 
-    // Create a public property.
     public int $user_id = 0;
 
     public int $filter = 0;
 
     public $page = [['id' => 10, 'name' => '10'], ['id' => 25, 'name' => '25'], ['id' => 50, 'name' => '50'], ['id' => 100, 'name' => '100']];
 
-    public int $perPage = 10; // Default jumlah data per halaman
+    public int $perPage = 10;
 
     public bool $showDetail = false;
     public ?Transaksi $detailTransaksi = null;
 
     public function detail($id)
     {
-        $this->detailTransaksi = Transaksi::with('orders.menu', 'user')->find($id); // pastikan relasi 'order' ada
+        $this->detailTransaksi = Transaksi::with('orders.menu', 'user')->find($id);
 
         if (!$this->detailTransaksi) {
             $this->error('Transaksi tidak ditemukan.');
@@ -43,7 +42,6 @@ new class extends Component {
         $this->showDetail = true;
     }
 
-    // Clear filters
     public function clear(): void
     {
         $this->reset();
@@ -51,7 +49,6 @@ new class extends Component {
         $this->success('Filters cleared.', position: 'toast-top');
     }
 
-    // Table headers
     public function headers(): array
     {
         return [['key' => 'invoice', 'label' => 'INV', 'class' => 'w-64'], ['key' => 'user_name', 'label' => 'User', 'class' => 'w-48'], ['key' => 'status', 'label' => 'Status', 'class' => 'w-24'], ['key' => 'tanggal', 'label' => 'Tanggal', 'class' => 'w-40', 'format' => ['date', 'H:i:s d/m/Y']]];
@@ -62,14 +59,10 @@ new class extends Component {
         return Transaksi::query()
             ->withAggregate('user', 'name')
             ->where('status', 'success')
-            // ->where('tanggal', now())
             ->when($this->search, function (Builder $q) {
                 if (is_numeric($this->search)) {
-                    // dd($this->search);
-                    // Jika search adalah angka, cari di total
                     $q->where('total', 'like', $this->search . '%');
                 } else {
-                    // Jika bukan angka, cari di invoice
                     $q->where('invoice', 'like', "%{$this->search}%");
                 }
             })
@@ -99,7 +92,6 @@ new class extends Component {
         ];
     }
 
-    // Reset pagination when any component property changes
     public function updated($property): void
     {
         if (!is_array($property) && $property != '') {
@@ -147,7 +139,12 @@ new class extends Component {
 
     <!-- TABLE wire:poll.5s="users"  -->
     <x-card>
-        <x-table :headers="$headers" :rows="$transaksi" :sort-by="$sortBy" with-pagination show-empty-text empty-text="Data tidak ada!">
+        <x-table :headers="$headers" :rows="$transaksi" :sort-by="$sortBy" with-pagination show-empty-text
+            empty-text="Data tidak ada!">
+
+            @scope('cell_user_name', $transaksi)
+                {{ $transaksi['user_name'] ?? ($transaksi['guest_name'] ?? '-') }}
+            @endscope
 
             @scope('cell_status', $transaksi)
                 @php
@@ -157,7 +154,6 @@ new class extends Component {
                         'cancel' => 'border-red-500 text-red-500',
                     ];
                 @endphp
-
                 <span class="px-2 py-1 border rounded-md {{ $colors[$transaksi['status']] ?? 'border-gray-300 ' }}">
                     {{ ucfirst($transaksi['status']) }}
                 </span>
@@ -172,6 +168,7 @@ new class extends Component {
                         @click="if (confirm('Yakin ingin menyelesaikan pesanan ini?')) { $wire.selesaikan({{ $transaksi['id'] }}) }" />
                 </div>
             @endscope
+
         </x-table>
     </x-card>
 
@@ -186,7 +183,7 @@ new class extends Component {
                     </div>
                     <div>
                         <p class="font-semibold ">User</p>
-                        <p class="">{{ $detailTransaksi['user']['name'] ?? '-' }}</p>
+                        <p class="">{{ $detailTransaksi['user']['name'] ?? $detailTransaksi['guest_name'] ?? '-' }}</p>
                     </div>
                     <div>
                         <p class="font-semibold ">Total</p>

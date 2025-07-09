@@ -13,6 +13,8 @@ class Cart extends Model
     protected $fillable = [
         'menu_id',
         'user_id',
+        'session_id',
+        'guest_name',
         'qty',
         'keterangan',
         'created_at',

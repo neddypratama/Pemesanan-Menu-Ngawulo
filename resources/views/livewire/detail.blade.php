@@ -1,8 +1,8 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\Menu;
 use Livewire\Attributes\Layout;
+use App\Models\Menu;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
@@ -15,122 +15,132 @@ new #[Layout('components.layouts.buy')] class extends Component {
     public int $totalRatings = 0;
     public bool $isInCart = false;
 
+    public string $guestName = '';
+    public bool $showGuestNameModal = false;
+
     public function mount(Menu $menu): void
     {
         $this->menu = $menu->load(['ratings', 'kategori']);
-        $this->averageRating = round($menu->ratings->avg('rating'), 1);
-        $this->totalRatings = $menu->ratings->count();
+        $this->averageRating = round($this->menu->ratings->avg('rating'), 1);
+        $this->totalRatings = $this->menu->ratings->count();
+
+        if (session()->has('guest_name')) {
+            $this->guestName = session('guest_name');
+        }
 
         $this->checkCartStatus();
     }
 
     public function checkCartStatus(): void
     {
-        $user = Auth::user();
-        if ($user) {
-            $this->isInCart = Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->exists();
+        if (Auth::check()) {
+            $this->isInCart = Cart::where('user_id', Auth::id())->where('menu_id', $this->menu->id)->exists();
         } else {
-            $this->isInCart = false;
+            $sessionId = session()->getId();
+            $this->isInCart = Cart::where('session_id', $sessionId)->where('menu_id', $this->menu->id)->exists();
         }
     }
 
     public function addToCart(): void
     {
-        $user = Auth::user();
-        if (!$user) {
-            return;
-        }
+        if (Auth::check()) {
+            $cartItem = Cart::where('user_id', Auth::id())->where('menu_id', $this->menu->id)->first();
 
-        $cartItem = Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->first();
+            if ($cartItem) {
+                $cartItem->increment('qty');
+            } else {
+                Cart::create([
+                    'user_id' => Auth::id(),
+                    'menu_id' => $this->menu->id,
+                    'qty' => 1,
+                ]);
+            }
 
-        if ($cartItem) {
-            $cartItem->increment('qty');
+            logActivity('create', 'Menambahkan menu ' . $this->menu->name . ' ke cart');
+            $this->toast('success', 'Produk berhasil ditambahkan ke keranjang!');
         } else {
-            Cart::create([
-                'user_id' => $user->id,
-                'menu_id' => $this->menu->id,
-                'qty' => 1,
-            ]);
+            if (!$this->guestName) {
+                // Jika guestName kosong, buka modal input nama
+                $this->showGuestNameModal = true;
+                return;
+            }
+
+            // Simpan guestName ke session
+            session(['guest_name' => $this->guestName]);
+
+            $sessionId = session()->getId();
+            $cartItem = Cart::where('session_id', $sessionId)->where('menu_id', $this->menu->id)->first();
+
+            if ($cartItem) {
+                $cartItem->increment('qty');
+            } else {
+                Cart::create([
+                    'session_id' => $sessionId,
+                    'menu_id' => $this->menu->id,
+                    'qty' => 1,
+                    'guest_name' => $this->guestName,
+                ]);
+            }
+            $this->showGuestNameModal = false;
+            $this->toast('success', 'Produk berhasil ditambahkan ke keranjang!');
         }
 
         $this->checkCartStatus();
         $this->dispatch('cartUpdated');
-        // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
-        session()->flash('status', 'Produk berhasil ditambahkan ke keranjang!');
-        logActivity('create', 'Menambahkan menu ' . $this->menu->name .' ke cart' );
-
     }
 
     public function removeFromCart(): void
     {
-        $user = Auth::user();
-        if (!$user) {
-            return;
-        }
+        if (Auth::check()) {
+            Cart::where('user_id', Auth::id())->where('menu_id', $this->menu->id)->delete();
 
-        Cart::where('user_id', $user->id)->where('menu_id', $this->menu->id)->delete();
+            logActivity('delete', 'Menghapus menu ' . $this->menu->name . ' dari cart');
+        } else {
+            $sessionId = session()->getId();
+
+            Cart::where('session_id', $sessionId)->where('menu_id', $this->menu->id)->delete();
+        }
 
         $this->checkCartStatus();
         $this->dispatch('cartUpdated');
-        // $this->success('Keranjang diperbaharui!', position: 'toast-buttom');
-        session()->flash('status', 'Produk dihapus dari keranjang.');
-        logActivity('delete', 'Menghapus menu ' . $this->menu->name .' ke cart' );
+        $this->toast('info', 'Produk dihapus dari keranjang.');
     }
 };
 ?>
 
 <div class="max-w-6xl mx-auto px-4 py-10">
-    @if (session('status') || session('error'))
-        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show"
-            class="fixed top-5 right-5 z-50 max-w-xs w-full p-4 rounded-lg shadow text-sm text-white transition duration-300"
-            :class="{
-                'bg-green-500': '{{ session('status') }}',
-                'bg-red-500': '{{ session('error') }}'
-            }"
-            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2"
-            x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-300"
-            x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2">
-            <div class="flex justify-between items-center">
-                <span class="flex-1">
-                    {{ session('status') ?? session('error') }}
-                </span>
-                <button @click="show = false" class="ml-2">
-                    &times;
-                </button>
-            </div>
-        </div>
-    @endif
-    
+    {{-- Toast sudah otomatis tampil jika ada pesan --}}
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start" wire:poll="checkCartStatus">
-        <!-- Gambar Produk -->
+
+        {{-- Gambar Produk --}}
         <div class="lg:col-span-4 flex justify-center md:justify-start">
-            <img src="{{ $menu->photo }}" alt="{{ $menu->name }}"
-                class="w-60 h-60 object-cover rounded-lg shadow-md" />
+            <img src="{{ $menu->photo }}" alt="{{ $menu->name }}" class="w-60 h-60 object-cover rounded-lg shadow-md" />
         </div>
 
-        <!-- Detail Produk -->
+        {{-- Detail Produk --}}
         <div class="lg:col-span-6 space-y-5">
             <h2 class="text-2xl md:text-3xl font-bold">{{ $menu->name }}</h2>
 
-            <div class="text-lg font-semibold ">
+            <div class="text-lg font-semibold">
                 Rp. {{ number_format($menu->price, 0, ',', '.') }}
             </div>
 
-            <!-- Add / Remove from Cart -->
+            {{-- Add / Remove from Cart --}}
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 @if ($isInCart)
-                    <x-button spinner wire:click="removeFromCart" class="flex items-center text-sm rounded btn-error btn-sm"
-                        icon="fas.trash">
+                    <x-button spinner wire:click="removeFromCart"
+                        class="flex items-center text-sm rounded btn-error btn-sm" icon="fas.trash">
                         Hapus dari keranjang
                     </x-button>
                 @else
-                    <x-button spinner wire:click="addToCart" class="flex items-center text-sm rounded btn-sm btn-primary"
-                        icon="fas.shopping-cart">
+                    <x-button spinner wire:click="addToCart"
+                        class="flex items-center text-sm rounded btn-sm btn-primary" icon="fas.shopping-cart">
                         Tambah ke keranjang
                     </x-button>
                 @endif
 
-                <!-- Rating -->
+                {{-- Rating --}}
                 <div class="flex items-center">
                     @for ($i = 1; $i <= 5; $i++)
                         @if ($i <= floor($averageRating))
@@ -143,15 +153,32 @@ new #[Layout('components.layouts.buy')] class extends Component {
                 </div>
             </div>
 
-            <!-- Deskripsi -->
+            {{-- Deskripsi --}}
             <p class="text-sm md:text-base leading-relaxed text-gray-700">
                 {{ $menu->deskripsi }}
             </p>
         </div>
 
-        <!-- Tombol Kembali -->
+        {{-- Tombol Kembali --}}
         <div class="lg:col-span-2 flex justify-end">
             <x-button label="Kembali" link="/" class="btn-gost" icon="fas.arrow-left" />
         </div>
     </div>
+    {{-- Modal Mary UI untuk input nama guest --}}
+    <x-modal wire:model="showGuestNameModal" title="Mohon Isi Nama Anda" max-width="md" class="backdrop-blur"
+        x-on:keydown.escape.window="$wire.showGuestNameModal = false">
+
+        <div class="space-y-4">
+            <input wire:model.defer="guestName" type="text" placeholder="Masukkan nama Anda"
+                class="w-full border border-gray-300 rounded-md p-2" />
+            @error('guestName')
+                <p class="text-red-500 text-sm">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <x-slot:actions>
+            <x-button label="Batal" @click="$wire.showGuestNameModal = false" class="btn-secondary" />
+            <x-button label="Simpan & Tambah" wire:click="addToCart" class="btn-primary" />
+        </x-slot:actions>
+    </x-modal>
 </div>

@@ -49,7 +49,7 @@ new class extends Component {
     {
         $this->validate([
             'editingName' => 'required|string|max:255',
-            'editingStok' => 'required|integer|min:1',
+            'editingStok' => 'required|integer|min:0',
         ]);
 
         if ($this->editingMenu) {
@@ -177,7 +177,7 @@ new class extends Component {
     <x-modal wire:model="editModal" title="Edit Stok Menu">
         <div class="grid gap-4">
             <x-input label="Menu Name" wire:model="editingName" readonly/>
-            <x-input label="Stok" wire:model="editingStok" type="number" min="1"/>
+            <x-input label="Stok" wire:model="editingStok" type="number" min="0"/>
         </div>
 
         <x-slot:actions>

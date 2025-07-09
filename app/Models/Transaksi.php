@@ -15,6 +15,8 @@ class Transaksi extends Model
         'tanggal',
         'total',
         'user_id',
+        'session_id',
+        'guest_name',
         'status',
         'total',
         'midtrans_id',
